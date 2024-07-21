@@ -1,41 +1,38 @@
-// 0720 ver
-const mongoose = require('mongoose'); // MongoDB와 상호 작용하기 위한 ODM 라이브러리
+const mongoose = require('mongoose');
 require('dotenv').config();
 
-const uri = process.env.MONGODB_URI; // .env 파일에 정의된 MONGODB_URI 환경변수 가져오기
+const uri = process.env.MONGODB_URI;
 
 const connectDB = async () => {
   if (!uri) {
-    console.error('MONGODB_URI is not defined');
+    console.error('MONGODB_URI가 정의되지 않았습니다.');
     process.exit(1);
   }
 
   try {
     await mongoose.connect(uri);
-    console.log('MongoDB connected');
+    console.log('MongoDB 연결');
     
-    // 커넥션 이벤트
     mongoose.connection.on('connected', () => {
-      console.log('DB 연결 성공');
+      console.log('Mongoose 연결!');
     });
 
     mongoose.connection.on('error', (err) => {
-      console.error(`DB 연결 실패: ${err}`);
+      console.error(`Mongoose 연결 에러: ${err}`);
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.log('DB disconnected');
+      console.log('Mongoose 연결 실패');
     });
   } catch (err) {
-    console.error('DB 연결 실패:', err);
+    console.error('MongoDB 연결 실패:', err);
     process.exit(1);
   }
 };
 
-// 프로세스가 종료될 때(ctrl+C) Mongoose 커넥션을 종료
 process.on('SIGINT', async () => {
   await mongoose.connection.close();
-  console.log('Mongoose connection closed(앱 종료됨)');
+  console.log('Mongoose connection closed due to app termination');
   process.exit(0);
 });
 
