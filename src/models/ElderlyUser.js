@@ -1,31 +1,34 @@
-// 0721 ver
+// 0722 ver(노인 사용자 회원가입 시 받아올 정보 수정됨)
+// 보호자가 없는 노인 사용자는 존재하지 않음
 const mongoose = require('mongoose');
 
 const ElderlyUserSchema = new mongoose.Schema({
-  name: {
+  userId: {
+    type: Number,
+    unique: true,
+    autoIncrement: true
+  },
+  id: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   password: {
     type: String,
     required: true
   },
-  birthday: { 
-    type: Date,
-    required: true,
-  },
-  existingConditions: {
-    type: String,
-    required: false
-  },
-  phone: {
+  name: {
     type: String,
     required: true
   },
+  birth: { 
+    type: Date,
+    required: true,
+  },
   guardianId: {
-    type: mongoose.Schema.Types.ObjectId, // ObjectId로 수정
-    ref: 'GuardianUser', // GuardianUser 모델의 ObjectId를 참조
-    required: false // 보호자가 없는 경우가 있을 수 있음
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'GuardianUser',
+    required: true
   },
   role: {
     type: String,
