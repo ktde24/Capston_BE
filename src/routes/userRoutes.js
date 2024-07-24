@@ -13,6 +13,6 @@ router.post('/register', addElderlyUser);
 router.get('/guardian',getAllGuardianUsers);
 
 // 보호자 회원가입
-router.post('/guardian/register')
+router.post('/guardian/register',addGuardianUser);
 
 module.exports = router;
