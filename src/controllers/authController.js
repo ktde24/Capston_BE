@@ -30,3 +30,18 @@ const loginElderlyUser = asyncHandler(async (req, res) => {
   });
 
 // 보호자 로그인
+const loginGuardianUser = asyncHandler(async (req, res) => {
+  const { id, password } = req.body;
+
+  const user = await ElderlyUser.findOne({ id });
+
+  if (user && (await bcrypt.compare(password, user.password))) {
+    res.json({
+      _id: user._id, // MongoDB에서 사용되는 ObjectId
+      id: user.id,
+      token: generateToken(user._id),
+    });
+  } else {
+    res.status(401).json({ message: '아이디 또는 비밀번호가 올바르지 않습니다.' });
+  }
+});
