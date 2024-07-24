@@ -1,31 +1,25 @@
-require("dotenv").config({path: "../.env"}); //.env에 있는 변수 가져오기
-const express = require("express");
-const expressLayouts=require("express-ejs-layouts");
-const session=require("express-session");
-const connectDb=require("./config/db");
+// 0721 ver
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const connectDB = require('./config/db'); // 데이터베이스 연결 설정 파일
+const userRoutes = require('./routes/userRoutes'); 
 const app = express();
-const port = process.env.PORT || 3000; //.env에 PORT가 없으면 3000번 포트 사용
-const cookieParser=require("cookie-parser");//쿠키파서 가져오기
-//const methodOverride=require("method-override");
 
-//const {SECRET_KEY}=process.env.SECRET_KEY;
+// MongoDB 연결
+connectDB();
 
-//db 접속
-connectDb();
+// 미들웨어 설정
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-//바디파서(요청 본문을 프로그래밍에 맞게 사용하고 싶을 때) 미들웨어 등록
-app.use(express.json());
-app.use(express.urlencoded({extended:true}));
+// 라우터 설정
+app.use('/elderly-users', userRoutes);
 
-//router 등록(노인)
-app.use("/",require("./routes/userRoutes"));
-
-app.get("/",(req,res)=>{
-  res.send("test");
+// 서버 실행
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server 실행 중 ${PORT}`);
 });
 
-
-app.listen(port, () => {
-  console.log(`App listening on port ${port}`);
-  console.log("Running");
-});
+module.exports = app;
