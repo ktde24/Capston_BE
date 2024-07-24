@@ -39,6 +39,10 @@ const GuardianUserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  elderlyName:{
+    type: String,
+    required: true,
+  },
   existingConditions: { 
     type: String,
     required: true,
@@ -54,7 +58,7 @@ const GuardianUserSchema = new mongoose.Schema({
   role: {
     type: String,
     default: "guardian"
-  }
+  },
 });
 
 const GuardianUser = mongoose.model('GuardianUser', GuardianUserSchema);

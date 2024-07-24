@@ -47,7 +47,7 @@ const getAllGuardianUsers=asyncHandler(async(req,res)=>{
 
 // GuardianUser 가입
 const addGuardianUser = asyncHandler(async (req, res) => {
-  const { id, name, password,email,phone,address, birth,job,existingConditions,elderlyPhone,elderlyAddress} = req.body;
+  const { id, name, password,email,phone,address, birth,job,elderlyName,existingConditions,elderlyPhone,elderlyAddress} = req.body;
 
   // id 중복 여부 확인
   const existingId = await GuardianUser.findOne({ id: id});
@@ -68,6 +68,7 @@ const addGuardianUser = asyncHandler(async (req, res) => {
     address, 
     birth,
     job,
+    elderlyName,
     existingConditions,
     elderlyPhone,
     elderlyAddress,
