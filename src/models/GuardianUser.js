@@ -55,6 +55,10 @@ const GuardianUserSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  elderlyBirthday: { 
+    type: Date,
+    required: true,
+  },
   role: {
     type: String,
     default: "guardian"
