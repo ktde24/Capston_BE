@@ -16,7 +16,7 @@ const generateToken = (id) => {
 const loginElderlyUser = asyncHandler(async (req, res) => {
     const { id, password } = req.body;
   
-    const user = await ElderlyUser.findOne({ id });
+    const user = await GuardianUser.findOne({ id });
   
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
@@ -45,3 +45,5 @@ const loginGuardianUser = asyncHandler(async (req, res) => {
     res.status(401).json({ message: '아이디 또는 비밀번호가 올바르지 않습니다.' });
   }
 });
+
+module.exports = { loginElderlyUser, loginGuardianUser };
