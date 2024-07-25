@@ -8,3 +8,5 @@ yarn-error.log*
 # 환경 변수 파일
 .env
 
+# TTS
+.Google_TTS_KEY.json
