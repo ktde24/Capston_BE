@@ -1,6 +1,5 @@
-// 0725 ver
+// 0726 ver
 // 실시간 음성 대화하려면 WebSocket 필요한 듯 -> Postman은 WebSocket API 테스트를 지원X
-
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
@@ -10,6 +9,8 @@ const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
 const assessmentRoutes = require('./routes/assessmentRoutes');
 const ttsRoutes = require('./routes/ttsRoutes');
+const sttRoutes = require('./routes/sttRoutes');
+const cors = require('cors');
 
 const app = express();
 
@@ -17,6 +18,7 @@ const app = express();
 connectDB();
 
 // 미들웨어 설정
+app.use(cors()); // CORS 미들웨어 추가
 app.use(express.json());
 
 // 라우터 설정
@@ -24,6 +26,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/tts', ttsRoutes);
+app.use('/api/stt', sttRoutes);
 
 // HTTP 서버 생성
 const server = http.createServer(app);
