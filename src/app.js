@@ -6,8 +6,11 @@ const connectDB = require('./config/db'); // 데이터베이스 연결 설정 �
 const userRoutes = require('./routes/userRoutes'); 
 const authRoutes = require('./routes/authRoutes');  // 인증 라우터
 const assessmentRoutes = require('./routes/assessmentRoutes'); 
+
+const chatRoutes = require('./routes/chatRoutes'); //대화(chatgpt api) 라우터
 //const cookieParser = require('cookie-parser');
 
+//const expressLayouts=require("express-ejs-layouts");//ejs
 
 const app = express();
 
@@ -24,7 +27,6 @@ app.use(express.json());
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes); 
 app.use('/api/assessments', assessmentRoutes);
-
 
 // 서버 실행
 const PORT = process.env.PORT || 3000;
