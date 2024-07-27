@@ -14,10 +14,4 @@ router.get('/guardian', getAllGuardianUsers);
 // 보호자 회원 가입
 router.post('/guardian/register', addGuardianUser);
 
-// 보호자 조회
-router.get('/guardian',getAllGuardianUsers);
-
-// 보호자 회원가입
-router.post('/guardian/register',addGuardianUser);
-
 module.exports = router;

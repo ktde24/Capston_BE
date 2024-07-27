@@ -35,4 +35,4 @@ app.listen(PORT, () => {
   console.log(`Server 실행 중 ${PORT}`);
 });
 
-// module.exports = app;
+module.exports = app;
