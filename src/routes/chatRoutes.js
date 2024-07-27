@@ -9,10 +9,15 @@ router.get('/chat',async function(req,res){
 });
 
 router.post('/chat',async function(req,res){
-  //본문에서 prompt 가져오기
-  const prompt=req.body.prompt;
+  //사용자 msg 가져오기
+  const msg=req.body.message;
+
+  if(!msg){//사용자 입력 없음
+    return res.status(400).send({error: '메시지를 입력하세요.'});
+  }
+  
   //응답 가져오기
-  const response=await callChatgpt(prompt);
+  const response=await callChatgpt(msg);
 
   if(response){
     res.json({'response':response});

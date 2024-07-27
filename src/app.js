@@ -27,6 +27,7 @@ app.use(express.json());
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes); 
 app.use('/api/assessments', assessmentRoutes);
+app.use('/api/chat', chatRoutes); //대화
 
 // 서버 실행
 const PORT = process.env.PORT || 3000;
