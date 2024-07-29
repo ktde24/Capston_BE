@@ -1,4 +1,4 @@
-// 0724 ver
+// 0725 ver (노인이 입력한 본인 이름과 보호자의 전화번호가 보호자가 입력한 사항과 일치한 경우에만 노인 회원가입 가능)
 
 const asyncHandler = require('express-async-handler');
 const bcrypt = require('bcrypt');
@@ -16,16 +16,12 @@ const getAllElderlyUsers = asyncHandler(async (req, res) => {
 });
 // ElderlyUser 가입
 const addElderlyUser = asyncHandler(async (req, res) => {
-  const { id, password, name, birth, guardianUserId } = req.body;
+  const { id, password, name, guardianPhone } = req.body;
 
-  // guardianUserId가 유효한지 확인하고, 보호자가 입력한 노인 이름과 일치하는지 확인
-  const guardian = await GuardianUser.findOne({ id: guardianUserId });
+  // guardianPhone이 유효한지 확인하고, 보호자가 입력한 노인 이름과 일치하는지 확인
+  const guardian = await GuardianUser.findOne({ phone: guardianPhone, elderlyName: name });
   if (!guardian) {
-    return res.status(400).json({ message: '유효하지 않은 보호자 ID입니다.' });
-  }
-
-  if (guardian.elderlyName !== name) {
-    return res.status(400).json({ message: '노인 사용자의 이름이 보호자 정보와 일치하지 않습니다.' });
+    return res.status(400).json({ message: '유효하지 않은 보호자 전화번호이거나 노인 사용자의 이름이 보호자 정보와 일치하지 않습니다.' });
   }
 
   // 비밀번호 해싱
@@ -36,8 +32,7 @@ const addElderlyUser = asyncHandler(async (req, res) => {
     id,
     password: hashedPassword,
     name,
-    birth,
-    guardianId: guardian._id,
+    guardianPhone
   });
 
   res.status(201).json({

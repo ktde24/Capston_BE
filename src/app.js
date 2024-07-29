@@ -1,16 +1,17 @@
-// 0722 ver
-
+// 0726 ver
+// 실시간 음성 대화하려면 WebSocket 필요한 듯 -> Postman은 WebSocket API 테스트를 지원X
 const express = require('express');
-// const bodyParser = require('body-parser');
-const connectDB = require('./config/db'); // 데이터베이스 연결 설정 파일
-const userRoutes = require('./routes/userRoutes'); 
-const authRoutes = require('./routes/authRoutes');  // 인증 라우터
-const assessmentRoutes = require('./routes/assessmentRoutes'); 
-
+const http = require('http');
+const WebSocket = require('ws');
+const { textToSpeechConvert } = require('./utils/tts');
+const connectDB = require('./config/db');
+const userRoutes = require('./routes/userRoutes');
+const authRoutes = require('./routes/authRoutes');
+const assessmentRoutes = require('./routes/assessmentRoutes');
+const ttsRoutes = require('./routes/ttsRoutes');
+const sttRoutes = require('./routes/sttRoutes');
+const cors = require('cors');
 const chatRoutes = require('./routes/chatRoutes'); //대화(chatgpt api) 라우터
-//const cookieParser = require('cookie-parser');
-
-//const expressLayouts=require("express-ejs-layouts");//ejs
 
 const app = express();
 
@@ -18,19 +19,43 @@ const app = express();
 connectDB();
 
 // 미들웨어 설정
+app.use(cors()); // CORS 미들웨어 추가
 app.use(express.json());
-//app.use(cookieParser()); 
-//app.use(bodyParser.json());
-//app.use(bodyParser.urlencoded({ extended: true }));
 
 // 라우터 설정
 app.use('/api/users', userRoutes);
-app.use('/api/auth', authRoutes); 
+app.use('/api/auth', authRoutes);
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/chat', chatRoutes); //대화
+app.use('/api/tts', ttsRoutes);
+app.use('/api/stt', sttRoutes);
+
+// HTTP 서버 생성
+const server = http.createServer(app);
+
+// WebSocket 서버 생성 및 연결 설정
+const wss = new WebSocket.Server({ server });
+
+wss.on('connection', (ws) => {
+  ws.on('message', async (message) => {
+    const text = message.toString();
+    try {
+      const audioContent = await textToSpeechConvert(text);
+      ws.send(audioContent);
+    } catch (error) {
+      ws.send(JSON.stringify({ error: '음성 변환 실패: ' + error.message }));
+    }
+  });
+
+  ws.on('close', () => {
+    console.log('Client disconnected');
+  });
+});
 
 // 서버 실행
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server 실행 중 ${PORT}`);
 });
+
+module.exports = app;
