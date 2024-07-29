@@ -2,11 +2,11 @@ const express=require('express');
 const router = express.Router();
 const {callChatgpt}=require('../utils/chatgpt');
 
-router.get('/chat',async function(req,res){
+router.get('/',async function(req,res){
   res.send("chat 화면");
 });
 
-router.post('/chat',async function(req,res){
+router.post('/',async function(req,res){
   //사용자 msg 가져오기
   const msg=req.body.message;
 

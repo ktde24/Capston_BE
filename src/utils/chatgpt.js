@@ -1,24 +1,23 @@
 require('dotenv').config();
-const {Configuration, OpenAIApi}=require("openai");
+const {OpenAI}=require("openai");
 
 async function callChatgpt(prompt){
-  const configuration=new Configuration({
-    apiKey:process.env.OPENAI_API_KEY,
+ 
+  const openai = new OpenAI({
+    user: process.env.OPENAI_API_KEY,
   });
 
   try{
-    const openai=new OpenAIApi(configuration);
-
-    const response=await openai.createChatCompletion({
+    const response=await openai.chat.completions.create({
       model:"gpt-4o",
-      max_tokens:128,
       messages: [
-        {role:"assistant",
-          content:"안녕하세요! 소담이에요. 오늘 하루는 어떠셨나요?"
+        {
+          role:"user",
+          content:prompt,
         },
       ],
     });
-    return response.data.choices[0].message;
+    return response.choices[0].message.content;
   }catch(error){
     console.error('Chatgpt API를 불러오는 과정에서 에러 발생',error);
     return null;

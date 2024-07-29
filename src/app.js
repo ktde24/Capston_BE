@@ -34,5 +34,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server 실행 중 ${PORT}`);
 });
-
-module.exports = app;
