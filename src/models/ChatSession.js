@@ -1,4 +1,4 @@
-// 사용자별 대화 세션 관리 목적(0729 ver)
+// 사용자별 대화 세션 관리 목적(0729ver)
 const mongoose = require('mongoose');
 
 const chatSessionSchema = new mongoose.Schema({

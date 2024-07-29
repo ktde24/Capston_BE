@@ -1,4 +1,4 @@
-// 0729 ver(gpt 연결 추가)
+// 0729(gpt 연결 추가, 음성대화 Test 완료)
 // 실시간 음성 대화하려면 WebSocket 필요한 듯 -> Postman은 WebSocket API 테스트를 지원X
 const express = require('express');
 const http = require('http');

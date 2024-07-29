@@ -1,4 +1,4 @@
-// 0729 ver(gpt 연결 추가)
+// 0729(gpt 연결 추가)
 const express = require('express');
 const router = express.Router();
 

@@ -1,4 +1,4 @@
-// 0729 ver
+// 0729 ver(대화, 세션 관리)
 const { callChatgpt } = require('../utils/chatgpt');
 const { speechToText } = require('../utils/stt');
 const { textToSpeechConvert } = require('../utils/tts');
