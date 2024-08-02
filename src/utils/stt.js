@@ -1,18 +1,16 @@
-// 0726 ver
+// 0729 ver
 const axios = require('axios');
-const fs = require('fs');
 require('dotenv').config();
 
 const clientId = process.env.NAVER_CLIENT_ID;
 const clientSecret = process.env.NAVER_CLIENT_SECRET;
 
-async function speechToText(audioFilePath) {
+async function speechToText(audioBuffer) {
   const lang = "Kor";
   const url = "https://naveropenapi.apigw.ntruss.com/recog/v1/stt?lang=" + lang;
-  const audioData = fs.readFileSync(audioFilePath);
 
   try {
-    const response = await axios.post(url, audioData, {
+    const response = await axios.post(url, audioBuffer, {
       headers: {
         'Content-Type': 'application/octet-stream',
         'X-NCP-APIGW-API-KEY-ID': clientId,
@@ -27,3 +25,4 @@ async function speechToText(audioFilePath) {
 }
 
 module.exports = { speechToText };
+
