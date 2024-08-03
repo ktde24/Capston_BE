@@ -1,8 +1,10 @@
 const mongoose = require('mongoose');
 
+const now = new Date();
+
 const DiarySchema = new mongoose.Schema({
   diaryId: {
-    type: Number,
+    type: String,
     unique: true,
     autoIncrement: true
   },

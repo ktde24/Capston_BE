@@ -11,6 +11,7 @@ const assessmentRoutes = require('./routes/assessmentRoutes');
 const ttsRoutes = require('./routes/ttsRoutes');
 const sttRoutes = require('./routes/sttRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const diaryRoutes = require('./routes/diaryRoutes');
 const chatController = require('./controllers/chatController');
 
 const app = express();
@@ -29,6 +30,7 @@ app.use('/api/assessments', assessmentRoutes);
 app.use('/api/chat', chatRoutes); //대화
 app.use('/api/tts', ttsRoutes);
 app.use('/api/stt', sttRoutes);
+app.use('/api/diary',diaryRoutes);
 
 // HTTP 서버 생성
 const server = http.createServer(app);

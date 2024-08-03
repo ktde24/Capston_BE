@@ -1,66 +1,87 @@
+const asyncHandler = require('express-async-handler');
 const { generateDiary } = require('../utils/chatgpt');
 const ElderlyUser = require('../models/ElderlyUser');
 const ChatSession = require('../models/ChatSession');
 const Diary = require('../models/Diary');
+const mongoose = require('mongoose');
 
 //일기 생성
-const makeDiary=asyncHandler(async (ws, message) =>{
-  const data = JSON.parse(message);
-  const { userId, sessionId } = data;
+const makeDiary=asyncHandler(async (req, res) =>{
+  //const data = JSON.parse(message);
+  //const { userId, sessionId } = data;
+  const userId=req.params.userId;
+  const sessionId=req.params.sessionId;
+
   try { 
-    ws.userId = userId;
-    ws.sessionId = sessionId;
+    //ws.userId = userId;
+    //ws.sessionId = sessionId;
     
     //사용자 확인
-    const user = await ElderlyUser.findById(userId);
+    const user = await ElderlyUser.findOne({id: userId});
     if (!user) {
-      ws.send(JSON.stringify({ type: 'error', message: '사용자를 찾을 수 없습니다.' }));
+      //ws.send(JSON.stringify({ type: 'error', message: '사용자를 찾을 수 없습니다.' }));
+      console.log('사용자를 찾을 수 없습니다.');
       return;
     }
+
+    const userObjectId = new mongoose.Types.ObjectId(user._id);
 
     //세션 확인. 세션 가져오기
-    const chatSession = await ChatSession.findOne({ userId: userId, sessionId: sessionId});
+    const chatSession = await ChatSession.findOne({ userId: userObjectId, sessionId: sessionId});
 
     if (!chatSession) {
-      ws.send(JSON.stringify({ type: 'error', message: '대화 내역을 찾을 수 없습니다.' }));
+      //ws.send(JSON.stringify({ type: 'error', message: '대화 내역을 찾을 수 없습니다.' }));
+      console.log('대화 내역을 찾을 수 없습니다.');
       return;
     }
 
-    const conversations=chatSession.messages;
+    const messages=chatSession.messages;
 
     //일기 생성
-    const diary=await generateDiary(conversations);
+    const diary=await generateDiary(messages);
+    if(!diary){
+      console.log('일기 실패');
+      return;
+    }
+    console.log('일기 생성');
     
     //일기 저장
     //새 일기 인스턴스 생성
     const newDiary = await Diary.create({
-      userId: userId,
+      userId: userObjectId,
       content: diary,
     });
 
+    res.status(200).json(newDiary);
     console.log(newDiary);
 
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: '일기 생성을 실패했습니다.' });
   }
 });
 
 //사용자 id(/:userId)로 일기 전체 조회
 const getAllDiaries=asyncHandler(async (req, res) => {
+  const userId=req.params.userId;
+
   try {  
     //사용자 확인
-    const user = await ElderlyUser.findOne({userId:req.params.id});
+    const user = await ElderlyUser.findOne({id:userId});
     if (!user) {
-      ws.send(JSON.stringify({ type: 'error', message: '사용자를 찾을 수 없습니다.' }));
+      res.status(500).json({ message: '사용자가 없습니다.' });
       return;
     }
-      
+    
+    const userObjectId = new mongoose.Types.ObjectId(user._id);
+    
     //userId인 사용자의 모든 일기 조회
-    const diaries = await Diary.find({userId:user.userId});
+    const diaries = await Diary.find({userId:userObjectId});
     if (!diaries) {
-      ws.send(JSON.stringify({ type: 'error', message: '일기가 없습니다.' }));
+      res.status(500).json({ message: '일기가 없습니다.' });
       return;
     }  
+
     res.status(200).json(diaries);
     
   } catch (error) {
@@ -70,12 +91,14 @@ const getAllDiaries=asyncHandler(async (req, res) => {
 
 //일기 id(/:userId/:diaryId)로 특정 일기 조회
 const getDiary=asyncHandler(async (req, res) => {
-  const { userId, diaryId } = req.params;
+  const userId= req.params.userId;
+  const diaryId = req.params.diaryId;
   try {  
+    const userObjectId = new mongoose.Types.ObjectId(userId);
     //일기 찾기
-    const diary = await Diary.findOne({userId:userId, diaryId:diaryId});
+    const diary = await Diary.findOne({userId:userObjectId, _id:diaryId});
     if (!diary) {
-      ws.send(JSON.stringify({ type: 'error', message: '일기를 찾을 수 없습니다.'}));
+      res.status(500).json({ message: '일기를 찾을 수 없습니다.' });
       return;
     }
 
@@ -83,6 +106,7 @@ const getDiary=asyncHandler(async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: '일기 조회에 실패했습니다.' });
+    console.log(error);
   }
 });
 
