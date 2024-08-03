@@ -29,7 +29,6 @@ app.use('/api/assessments', assessmentRoutes);
 app.use('/api/chat', chatRoutes); //대화
 app.use('/api/tts', ttsRoutes);
 app.use('/api/stt', sttRoutes);
-app.use('/api/chat', chatRoutes);
 
 // HTTP 서버 생성
 const server = http.createServer(app);
