@@ -1,4 +1,4 @@
-//0805 ver
+//0806 ver(조회 추가)
 const asyncHandler = require('express-async-handler');
 const axios = require('axios');
 const EmotionAnalysis = require('../models/EmotionAnalysis');
@@ -42,4 +42,26 @@ const createEmotionAnalysis = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { createEmotionAnalysis };
+// 감정 분석 결과 조회
+const getEmotionAnalysisByDate = asyncHandler(async (req, res) => {
+  const { userId, date } = req.params;
+  const startDate = new Date(date);
+  const endDate = new Date(date);
+  endDate.setDate(endDate.getDate() + 1); // 다음 날로 설정하여 당일 자정까지 포함
+
+  try {
+    const analyses = await EmotionAnalysis.find({
+      userId,
+      createdAt: {
+        $gte: startDate,
+        $lt: endDate
+      }
+    });
+
+    res.status(200).json(analyses);
+  } catch (error) {
+    res.status(500).json({ message: '감정 분석 결과를 조회하는 중 오류가 발생했습니다.', error: error.message });
+  }
+});
+
+module.exports = { createEmotionAnalysis, getEmotionAnalysisByDate };
