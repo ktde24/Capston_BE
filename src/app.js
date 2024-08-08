@@ -13,6 +13,7 @@ const sttRoutes = require('./routes/sttRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const diaryRoutes = require('./routes/diaryRoutes');
 const emotionAnalysisRoutes = require('./routes/emotionAnalysisRoutes'); // 추가된 라우터
+const memoryScoreRoutes=require('./routes/memoryScoreRoutes');
 const chatController = require('./controllers/chatController');
 
 const app = express();
@@ -28,18 +29,12 @@ app.use(express.json());
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/assessments', assessmentRoutes);
-<<<<<<< HEAD
-app.use('/api/chat', chatRoutes); //대화
-app.use('/api/tts', ttsRoutes);
-app.use('/api/stt', sttRoutes);
-app.use('/api/diary',diaryRoutes);
-=======
 app.use('/api/chat', chatRoutes);
 app.use('/api/tts', ttsRoutes);
 app.use('/api/stt', sttRoutes);
 app.use('/api/diary', diaryRoutes);
 app.use('/api/emotion-analysis', emotionAnalysisRoutes); // 새로운 감정 분석 라우터 추가
->>>>>>> 76339d749cbd60403b498d6ed7d5ddc5a0189cd7
+app.use('/api/memoryscore',memoryScoreRoutes);
 
 // HTTP 서버 생성
 const server = http.createServer(app);
