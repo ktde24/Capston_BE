@@ -1,4 +1,6 @@
-// 0729 ver(대화, 세션 관리)
+// 0807 ver(대화, 세션 관리)
+// JSON 응답과 Binary 데이터를 별도로 전송하여 클라이언트에서 이를 각각 처리할 수 있도록
+
 const { callChatgpt } = require('../utils/chatgpt');
 const { speechToText } = require('../utils/stt');
 const { textToSpeechConvert } = require('../utils/tts');
@@ -40,7 +42,7 @@ exports.handleWebSocketMessage = async (ws, message) => {
       if (!chatSession) {
         chatSession = new ChatSession({ userId: userId, sessionId: sessionId, messages: [] });
       }
-      chatSession.messages.push({ role: 'user', content: userText });
+      chatSession.messages.push({ role: 'user', content: userText, timestamp: new Date() });
 
       const conversations = chatSession.messages;
       const gptResponse = await callChatgpt(conversations);
@@ -50,10 +52,16 @@ exports.handleWebSocketMessage = async (ws, message) => {
         audioContent = await textToSpeechConvert(gptResponse);
       }
 
-      chatSession.messages = conversations;
+      chatSession.messages.push({ role: 'assistant', content: gptResponse, timestamp: new Date() });
       await chatSession.save();
 
-      ws.send(JSON.stringify({ type: 'response', userText, gptText: gptResponse, audioContent, sessionId }));
+      // JSON 응답 전송
+      ws.send(JSON.stringify({ type: 'response', userText, gptText: gptResponse, sessionId }));
+
+      // Binary 응답 전송
+      if (audioContent) {
+        ws.send(audioContent); // audioContent를 binary 형식으로 전송
+      }
     }
   } catch (error) {
     console.error('에러 발생:', error);
