@@ -20,7 +20,7 @@ const makeDiary=asyncHandler(async (req, res) =>{
     //사용자 확인
     const user = await ElderlyUser.findOne({id: userId});
     if (!user) {
-      //ws.send(JSON.stringify({ type: 'error', message: '사용자를 찾을 수 없습니다.' }));
+      res.status(400).json({ message: '사용자를 찾을 수 없습니다.' });
       console.log('사용자를 찾을 수 없습니다.');
       return;
     }
@@ -31,7 +31,7 @@ const makeDiary=asyncHandler(async (req, res) =>{
     const chatSession = await ChatSession.findOne({ userId: userObjectId, sessionId: sessionId});
 
     if (!chatSession) {
-      //ws.send(JSON.stringify({ type: 'error', message: '대화 내역을 찾을 수 없습니다.' }));
+      res.status(404).json({ message: '대화 내역을 찾을 수 없습니다.' });
       console.log('대화 내역을 찾을 수 없습니다.');
       return;
     }
@@ -41,6 +41,7 @@ const makeDiary=asyncHandler(async (req, res) =>{
     //일기 생성
     const diary=await generateDiary(messages);
     if(!diary){
+      res.status(500).json({ message: '일기 생성을 실패했습니다.' });
       console.log('일기 실패');
       return;
     }
@@ -70,7 +71,7 @@ const getAllDiaries=asyncHandler(async (req, res) => {
     //사용자 확인
     const user = await ElderlyUser.findOne({id:userId});
     if (!user) {
-      res.status(500).json({ message: '사용자가 없습니다.' });
+      res.status(400).json({ message: '사용자가 없습니다.' });
       return;
     }
     
@@ -79,7 +80,7 @@ const getAllDiaries=asyncHandler(async (req, res) => {
     //userId인 사용자의 모든 일기 조회
     const diaries = await Diary.find({userId:userObjectId});
     if (!diaries) {
-      res.status(500).json({ message: '일기가 없습니다.' });
+      res.status(404).json({ message: '일기가 없습니다.' });
       return;
     }  
 
@@ -98,7 +99,7 @@ const getDiary=asyncHandler(async (req, res) => {
     //사용자 확인
     const user = await ElderlyUser.findOne({id:userId});
     if (!user) {
-      res.status(500).json({ message: '사용자가 없습니다.' });
+      res.status(400).json({ message: '사용자가 없습니다.' });
       return;
     }
 
@@ -110,7 +111,7 @@ const getDiary=asyncHandler(async (req, res) => {
     }
     
     if (!diary.userId.equals(user._id)) { // 일기는 존재하지만 다른 사용자의 일기인지 확인(objectId라서 equals로 비교)
-      res.status(403).json({ message: '접근 권한이 없는 일기입니다.' });
+      res.status(401).json({ message: '접근 권한이 없는 일기입니다.' });
       return;
     }
 
@@ -131,7 +132,7 @@ const deleteDiary=asyncHandler(async (req, res) => {
     //사용자 확인
     const user = await ElderlyUser.findOne({id:userId});
     if (!user) {
-      res.status(500).json({ message: '사용자가 없습니다.' });
+      res.status(400).json({ message: '사용자가 없습니다.' });
       return;
     }
 
@@ -142,7 +143,7 @@ const deleteDiary=asyncHandler(async (req, res) => {
       return;
     }
     if (!diary.userId.equals(user._id)) { // 일기는 존재하지만 다른 사용자의 일기인지 확인(objectId라서 equals로 비교)
-      res.status(403).json({ message: '접근 권한이 없는 일기입니다.' });
+      res.status(401).json({ message: '접근 권한이 없는 일기입니다.' });
       return;
     }
 
@@ -170,7 +171,7 @@ const updateDiary=asyncHandler(async (req, res) => {
     //사용자 확인
     const user = await ElderlyUser.findOne({id:userId});
     if (!user) {
-      res.status(500).json({ message: '사용자가 없습니다.' });
+      res.status(400).json({ message: '사용자가 없습니다.' });
       return;
     }
 
@@ -184,7 +185,7 @@ const updateDiary=asyncHandler(async (req, res) => {
     if (!diary.userId.equals(user._id)) { // 일기는 존재하지만 다른 사용자의 일기인지 확인(objectId라서 equals로 비교)
       console.log(diary.userId);
       console.log(user._id);
-      res.status(403).json({ message: '접근 권한이 없는 일기입니다.' });
+      res.status(401).json({ message: '접근 권한이 없는 일기입니다.' });
       return;
     }
 

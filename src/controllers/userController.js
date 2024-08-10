@@ -100,4 +100,4 @@ const addGuardianUser = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { getAllElderlyUsers, addElderlyUser, addGuardianUser, getAllGuardianUsers };
+module.exports = { getAllElderlyUsers, addElderlyUser, addGuardianUser, getAllGuardianUsers, getGuardianById };
