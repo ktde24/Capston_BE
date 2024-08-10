@@ -15,6 +15,8 @@ const diaryRoutes = require('./routes/diaryRoutes');
 const emotionAnalysisRoutes = require('./routes/emotionAnalysisRoutes'); // 추가된 라우터
 const memoryScoreRoutes=require('./routes/memoryScoreRoutes');
 const chatController = require('./controllers/chatController');
+const memoryScoreRoutes=require('./routes/memoryScoreRoutes');
+
 
 const app = express();
 
