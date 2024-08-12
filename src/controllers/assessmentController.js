@@ -1,106 +1,96 @@
 // 자가진단 컨트롤러
-// 0720 ver((middelwares 경로 수정 필요))
-
+// 0812 ver
 const Assessment = require('../models/Assessment');
-const ElderlyUser = require('../models/ElderlyUser');
-const GuardianUser = require('../models/GuardianUser');
-const mongoose = require('mongoose');
 
-// 자가진단 점수 계산 함수
-const calculateScore = (answers) => {
-  return answers.reduce((total, answer) => total + parseInt(answer.score, 10), 0);
-};
-
-// 자가진단 결과 저장 (PRMQ)
-// 8점 이상이면 병원 방문 권유
-const savePRMQAssessment = async (req, res) => {
-  const { userId } = req.params;
-  const { answers } = req.body;
-
+// 새로운 자가진단 결과 생성
+exports.createAssessment = async (req, res) => {
   try {
-    const userObjectId = new mongoose.Types.ObjectId(userId);
-    const score = calculateScore(answers);
-    const assessment = new Assessment({
-      userId: userObjectId,
-      questionnaireType: 'PRMQ',
-      answers,
-      score,
-      date: new Date(),
-    });
+    const { userId, guardianId, questionnaireType, score, date } = req.body;
 
-    const newAssessment = await assessment.save();
-    let message = '자가진단 결과가 저장되었습니다.';
-    if (score >= 8) {
-      message += ' 8점 이상이므로 병원 방문을 권유합니다.';
+    if (!['KDSQ', 'PRMQ'].includes(questionnaireType)) {
+      return res.status(400).json({ message: 'Invalid questionnaire type' });
     }
-    res.status(201).json({ assessment: newAssessment, message: message });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-};
 
-// 자가진단 결과 저장 (KDSQ)
-const saveKDSQAssessment = async (req, res) => {
-  const { userId } = req.params;
-  const { guardianId, answers } = req.body;
-
-  try {
-    const userObjectId = new mongoose.Types.ObjectId(userId);
-    const guardianObjectId = new mongoose.Types.ObjectId(guardianId);
-    const score = calculateScore(answers);
-    const assessment = new Assessment({
-      userId: userObjectId,
-      guardianId: guardianObjectId,
-      questionnaireType: 'KDSQ',
-      answers,
-      score,
-      date: new Date(),
-    });
-
-    const newAssessment = await assessment.save();
-    let message = '자가진단 결과가 저장되었습니다.';
-    if (score >= 8) {
-      message += ' 8점 이상이므로 병원 방문을 권유합니다.';
+    if (questionnaireType === 'KDSQ' && !guardianId) {
+      return res.status(400).json({ message: 'Guardian ID가 필요합니다.' });
     }
-    res.status(201).json({ assessment: newAssessment, message: message });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-};
 
-// PRMQ 자가진단 결과 조회
-const getPRMQAssessments = async (req, res) => {
-  const { userId } = req.params;
+    if (questionnaireType === 'PRMQ' && guardianId) {
+      return res.status(400).json({ message: 'Guardian ID가 필요하지 않습니다.' });
+    }
 
-  try {
-    const assessments = await Assessment.find({
-      userId: new mongoose.Types.ObjectId(userId),
-      questionnaireType: 'PRMQ'
+    const newAssessment = new Assessment({
+      userId,
+      guardianId: questionnaireType === 'KDSQ' ? guardianId : null,
+      questionnaireType,
+      score,
+      date
     });
-    res.json(assessments);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+
+    await newAssessment.save();
+    res.status(201).json({ message: '성공', data: newAssessment });
+  } catch (error) {
+    res.status(500).json({ message: '실패', error });
   }
 };
 
-// KDSQ 자가진단 결과 조회
-const getKDSQAssessments = async (req, res) => {
-  const { userId } = req.params;
-
+// 특정 사용자의 자가진단 결과 조회
+exports.getAssessmentsByUser = async (req, res) => {
   try {
+    const { userId, questionnaireType } = req.params;
+
     const assessments = await Assessment.find({
-      userId: new mongoose.Types.ObjectId(userId),
-      questionnaireType: 'KDSQ'
+      userId,
+      questionnaireType
     });
-    res.json(assessments);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+
+    if (assessments.length === 0) {
+      return res.status(404).json({ message: '자가진단 결과를 찾을 수 없습니다.' });
+    }
+
+    res.status(200).json({ data: assessments });
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving assessments', error });
   }
 };
 
-module.exports = {
-  savePRMQAssessment,
-  saveKDSQAssessment,
-  getPRMQAssessments,
-  getKDSQAssessments,
+// 특정 보호자가 관련된 모든 자가진단 결과 조회
+exports.getAssessmentsByGuardian = async (req, res) => {
+  try {
+    const { guardianId } = req.params;
+
+    // guardianId로 KDSQ(보호자가 수행한)와 PRMQ(노인 사용자가 수행한) 결과를 모두 조회
+    const assessments = await Assessment.find({
+      $or: [
+        { guardianId: guardianId },  // 보호자가 수행한 KDSQ 결과
+        { userId: guardianId }       // 노인 사용자가 수행한 PRMQ 결과를 관리하는 보호자
+      ]
+    });
+
+    if (assessments.length === 0) {
+      return res.status(404).json({ message: '자가진단 결과를 찾을 수 없습니다.' });
+    }
+
+    res.status(200).json({ data: assessments });
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving assessments', error });
+  }
+};
+
+// 특정 자가진단 결과 삭제
+exports.deleteAssessment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const assessment = await Assessment.findById(id);
+
+    if (!assessment) {
+      return res.status(404).json({ message: '자가진단 결과를 찾을 수 없습니다.' });
+    }
+
+    await Assessment.findByIdAndDelete(id);
+    res.status(200).json({ message: '삭제되었습니다.' });
+  } catch (error) {
+    res.status(500).json({ message: '삭제 실패', error });
+  }
 };
