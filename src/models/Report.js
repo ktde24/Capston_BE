@@ -20,12 +20,14 @@ const ReportSchema = new mongoose.Schema({
     type: Date,
     default: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
   },
-  messages:{ //자녀에게 하고 싶은 말
-    type: String,
+  messages:{ 
+    type: Schema.Types.ObjectId,
+    ref: 'Diary',
     required: true
   },
   cdrScore:{// 기억 점수
-    type: Number,
+    type: Schema.Types.ObjectId,
+    ref: 'MemoryScore',
     required: true
   },
   emotions:{ //감정 분석
@@ -34,8 +36,9 @@ const ReportSchema = new mongoose.Schema({
     required: true
   },   
   conditions:{ //몸 상태
-    type:String,
-    required:true,
+    type: Schema.Types.ObjectId,
+    ref: 'Diary',
+    required: true
   },
 });
 

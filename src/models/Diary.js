@@ -25,6 +25,10 @@ const DiarySchema = new mongoose.Schema({
   messages:{ //자녀에게 하고 싶은 말
     type:String,
     required:true,
+  },
+  conditions:{ //자녀에게 하고 싶은 말
+    type:String,
+    required:true,
   }
 });
 
