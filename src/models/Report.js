@@ -11,37 +11,30 @@ const ReportSchema = new mongoose.Schema({
     ref: 'ElderlyUser',
     required: true
   },
-  guardianId: { // 확인 필요
+  diaryId: { // 일기 id
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'GuardianUser',
+    ref: 'Diary',
     required: true
   },
   date: { 
     type: Date,
     default: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
   },
-  condition:{
+  messages:{ //자녀에게 하고 싶은 말
+    type: String,
+    required: true
+  },
+  cdrScore:{// 기억 점수
+    type: Number,
+    required: true
+  },
+  emotions:{ //감정 분석
+    type: Schema.Types.ObjectId,
+    ref: 'EmotionAnalysis', // 감정분석 참조
+    required: true
+  },   
+  conditions:{ //몸 상태
     type:String,
-    required:true,
-  },
-  mainEmotion:{
-    type:String,
-    required:true,
-  },
-  emotionAnalysisTop3:{
-    type:String,
-    required:true,
-  },
-  dailyMemoryScore:{
-    type:int,
-    required:true,
-  },
-  weeklyMemoryScore:{
-    type:int,
-    required:true,
-  },
-  messageToGuardian:{
-    type:Text,
     required:true,
   },
 });

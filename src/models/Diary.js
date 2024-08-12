@@ -22,6 +22,10 @@ const DiarySchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  messages:{ //자녀에게 하고 싶은 말
+    type:String,
+    required:true,
+  }
 });
 
 const Diary = mongoose.model('Diary', DiarySchema);
