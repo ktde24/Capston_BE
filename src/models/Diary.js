@@ -1,4 +1,4 @@
-// 0805 ver
+// 0813 ver
 const mongoose = require('mongoose');
 
 const now = new Date();
@@ -9,7 +9,7 @@ const DiarySchema = new mongoose.Schema({
     unique: true,
     autoIncrement: true
   },
-  userId: { // 확인 필요
+  userId: { 
     type: mongoose.Schema.Types.ObjectId,
     ref: 'ElderlyUser',
     required: true
@@ -22,6 +22,14 @@ const DiarySchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  messageToChild: { // 자녀에게 하고 싶은 말
+    type: String,
+    required: true,
+  },
+  healthStatus: { // 건강 상태
+    type: String,
+    required: true,
+  }
 });
 
 const Diary = mongoose.model('Diary', DiarySchema);

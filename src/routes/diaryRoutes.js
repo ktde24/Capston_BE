@@ -1,17 +1,19 @@
-// 0805ver
-const express=require('express');
-const router = express.Router();
-const { makeDiary,getAllDiaries,getDiary,deleteDiary,updateDiary } = require('../controllers/diaryController');
+// 0813ver
 
-//일기 생성
-router.post('/:userId/:sessionId',makeDiary);
-//사용자별 모든 일기 조회
+const express = require('express');
+const router = express.Router();
+const { getAllDiaries, getDiary, deleteDiary, updateDiary } = require('../controllers/diaryController');
+
+// 사용자별 모든 일기 조회
 router.get('/:userId', getAllDiaries);
-//특정 일기 조회
+
+// 특정 일기 조회
 router.get('/:userId/:diaryId', getDiary);
-//일기 삭제
+
+// 일기 삭제
 router.delete('/:userId/:diaryId', deleteDiary);
-//일기 수정
+
+// 일기 수정
 router.patch('/:userId/:diaryId', updateDiary);
 
 module.exports = router;

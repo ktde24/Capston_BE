@@ -1,4 +1,4 @@
-//0806 ver(조회 추가)
+//0813 ver
 const asyncHandler = require('express-async-handler');
 const axios = require('axios');
 const EmotionAnalysis = require('../models/EmotionAnalysis');
@@ -65,3 +65,4 @@ const getEmotionAnalysisByDate = asyncHandler(async (req, res) => {
 });
 
 module.exports = { createEmotionAnalysis, getEmotionAnalysisByDate };
+

@@ -1,5 +1,7 @@
+// 0813ver(일한 날짜에 동일한 사용자가 두 번 이상 기억 점수를 생성하지 못하도록)
+
 const asyncHandler = require('express-async-handler');
-const { memoryTest } = require('../utils/chatgpt');
+const { memoryTest } = require('../utils/memoryScoreService');
 const ElderlyUser = require('../models/ElderlyUser');
 const GuardianUser = require('../models/GuardianUser');
 const MemoryScore = require('../models/MemoryScore');
@@ -9,11 +11,10 @@ const mongoose = require('mongoose');
 // 기억 테스트 시작
 const startMemoryTest = asyncHandler(async (req, res) => {
   const userId = req.params.userId;
-
   const msg = req.body.message;
 
   let conversations = []; // 테스트 대화 저장용
-  if (msg) { // 사용자 입력
+  if (msg) {
     conversations.push({
       role: "user",
       content: msg,
@@ -21,7 +22,6 @@ const startMemoryTest = asyncHandler(async (req, res) => {
   }
 
   let today = new Date();
-
   let diaryList = [];
 
   try {
@@ -32,7 +32,7 @@ const startMemoryTest = asyncHandler(async (req, res) => {
     }
 
     // 보호자 정보 가져오기
-    const guardian = await GuardianUser.findById(user.guardianId);
+    const guardian = await GuardianUser.findOne({ phone: user.guardianPhone });
     if (!guardian) {
       return res.status(404).json({ message: '보호자 정보를 불러오는 데 실패했습니다.' });
     }
@@ -51,6 +51,19 @@ const startMemoryTest = asyncHandler(async (req, res) => {
       }
     }
 
+    // 이미 오늘의 기억 점수가 기록되었는지 확인
+    const existingMemoryScore = await MemoryScore.findOne({
+      userId: user._id,
+      date: {
+        $gte: new Date(today.setHours(0, 0, 0, 0)),
+        $lte: new Date(today.setHours(23, 59, 59, 999)),
+      },
+    });
+
+    if (existingMemoryScore) {
+      return res.status(400).json({ message: '오늘의 기억 점수는 이미 생성되었습니다.' });
+    }
+
     // 기억 테스트 생성
     const response = await memoryTest(guardian, diaryList, conversations);
 
@@ -63,18 +76,18 @@ const startMemoryTest = asyncHandler(async (req, res) => {
         hintCnt: response.hintCnt,
         correctCnt: response.correctCnt,
         cdrScore: response.cdrScore,
-        diaryIds: diaryList.map(diary => diary._id)
+        diaryIds: diaryList.map(diary => diary._id),
       });
       await memoryScore.save();
 
       res.json({ conversations, response });
     } else {
-      res.status(500).json({ error: 'Failed to get response from ChatGPT API' });
+      res.status(500).json({ error: 'ChatGPT API로부터 응답을 받지 못했습니다.' });
     }
 
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: '테스트를 실패했습니다.' });
+    console.error(error);
+    res.status(500).json({ message: '기억 테스트를 실패했습니다.' });
   }
 });
 
@@ -93,13 +106,13 @@ const getAllMemoryScores = asyncHandler(async (req, res) => {
       scores = await MemoryScore.find({ userId: user._id });
     } else {
       // 보호자 ID로 노인 찾기
-      const guardian = await GuardianUser.findById(id);
+      const guardian = await GuardianUser.findOne({ phone: id });
       if (!guardian) {
         return res.status(404).json({ message: '사용자 또는 보호자를 찾을 수 없습니다.' });
       }
 
       // 보호자에 해당하는 노인의 점수 조회
-      const elderlyUsers = await ElderlyUser.find({ guardianId: guardian._id });
+      const elderlyUsers = await ElderlyUser.find({ guardianPhone: guardian.phone });
 
       const elderlyUserIds = elderlyUsers.map(user => user._id);
       scores = await MemoryScore.find({ userId: { $in: elderlyUserIds } });
