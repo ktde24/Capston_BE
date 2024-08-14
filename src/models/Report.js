@@ -1,12 +1,7 @@
-// 0813 ver
+// 0814 ver
 const mongoose = require('mongoose');
-const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const ReportSchema = new mongoose.Schema({
-  reportId: {
-    type: Number,
-    unique: true
-  },
   userId: { 
     type: mongoose.Schema.Types.ObjectId,
     ref: 'ElderlyUser',
@@ -19,34 +14,31 @@ const ReportSchema = new mongoose.Schema({
   },
   date: { 
     type: Date,
-    default: Date.now,
-  },
-  messages: { 
-    type: String,
     required: true
   },
-  cdrScore: { 
+  messages: { 
+    type: String, // 자녀에게 전하고 싶은 말
+    required: true
+  },
+  cdrScore: { // 기억 점수
     type: Number,
     required: true
   },
-  memoryScoreId: { 
+  memoryScoreId: { // MemoryScore의 _id 저장
     type: mongoose.Schema.Types.ObjectId,
     ref: 'MemoryScore',
     required: true
   },
-  emotions: { 
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'EmotionAnalysis', 
+  emotions: {
+    type: Map,
+    of: Number, // 감정 분석 결과
     required: true
-  },   
+  },
   conditions: { 
-    type: String,
+    type: String, // 건강 상태
     required: true
   },
 });
-
-// reportId 필드 자동 증가 설정
-ReportSchema.plugin(AutoIncrement, { inc_field: 'reportId' });
 
 const Report = mongoose.model('Report', ReportSchema);
 module.exports = Report;
