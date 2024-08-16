@@ -26,7 +26,7 @@ const DiarySchema = new mongoose.Schema({
     type:String,
     required:true,
   },
-  conditions:{ //자녀에게 하고 싶은 말
+  conditions:{ //몸 상태
     type:String,
     required:true,
   }

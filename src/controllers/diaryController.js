@@ -91,10 +91,22 @@ const getAllDiaries=asyncHandler(async (req, res) => {
   }
 });
 
-//일기 id(/:userId/:diaryId)로 특정 일기 조회
+//일기 id(/:userId/:date)로 특정 일기 조회(날짜)
 const getDiary=asyncHandler(async (req, res) => {
   const userId= req.params.userId;
-  const diaryId = req.params.diaryId.trim();//공백문자 제거
+  let startDate = req.params.date.trim();//공백문자 제거
+
+  //입력 문자열 YYYYMMDD 형식 가정
+  const year = startDate.substring(0, 4);
+  const month = startDate.substring(4, 6);
+  const day = startDate.substring(6, 8);
+
+  // ISO 형식의 문자열로 변환
+  startDate= new Date(`${year}-${month}-${day}T00:00:00Z`);
+  
+  let endDate=new Date(startDate);
+  endDate.setUTCHours(23, 59, 59, 999);
+
   try {  
     //사용자 확인
     const user = await ElderlyUser.findOne({id:userId});
@@ -104,7 +116,7 @@ const getDiary=asyncHandler(async (req, res) => {
     }
 
     // 일기 찾기
-    const diary = await Diary.findById(diaryId);
+    const diary = await Diary.findOne({ userId: user._id, date: { $gte: startDate, $lte: endDate } });
     if (!diary) {
       res.status(404).json({ message: '일기를 찾을 수 없습니다.' });
       return;
