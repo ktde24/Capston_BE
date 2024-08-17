@@ -1,34 +1,32 @@
-// 0813 ver
+// 0816 ver
 const mongoose = require('mongoose');
 
-const now = new Date();
-
 const DiarySchema = new mongoose.Schema({
-  diaryId: {
-    type: String,
-    unique: true,
-    autoIncrement: true
-  },
-  userId: { 
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'ElderlyUser',
     required: true
   },
-  date: { 
+  diaryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: mongoose.Types.ObjectId, // 자동으로 고유한 ObjectId 생성
+    unique: true // 중복을 허용하지 않음
+  },
+  content: {
+    type: String,
+    required: true
+  },
+  messageToChild: {
+    type: String,
+    required: false
+  },
+  healthStatus: {
+    type: String,
+    required: false
+  },
+  date: {
     type: Date,
-    default: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-  },
-  content: { 
-    type: String,
-    required: true,
-  },
-  messageToChild: { // 자녀에게 하고 싶은 말
-    type: String,
-    required: true,
-  },
-  healthStatus: { // 건강 상태
-    type: String,
-    required: true,
+    default: Date.now
   }
 });
 

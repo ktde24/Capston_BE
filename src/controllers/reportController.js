@@ -43,7 +43,7 @@ const createReport = asyncHandler(async (req, res) => {
         const emotionAnalysis = await EmotionAnalysis.findOne({ diaryId: diary._id });
 
         if (!emotionAnalysis || !emotionAnalysis._id) {
-            console.log('Emotion Analysis not found or missing _id for Diary ID:', diary._id);
+            console.log('감정분석 결과를 찾을 수 없거나, 해당 다이어리 아이디를 찾을 수 없습니다.', diary._id);
             return res.status(404).json({ message: '해당 일기에 대한 감정 분석 결과를 찾을 수 없습니다.' });
         }
 

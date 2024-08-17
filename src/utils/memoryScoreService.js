@@ -1,5 +1,8 @@
+// 0816ver - 기억력 점수 측정용 챗봇
+require('dotenv').config();
 const { OpenAI } = require("openai");
 
+// 기억점수 프롬프트 생성 함수
 async function createScorePrompt(userInfo, diaryList) {
   let score_prompt = `
 <Your role> 
@@ -59,6 +62,7 @@ for (let i = 0; i < diaryList.length; i++) {
 return score_prompt;
 }
 
+// 기억 테스트 함수
 async function memoryTest(userInfo, diaryList, conversations) {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -77,7 +81,7 @@ async function memoryTest(userInfo, diaryList, conversations) {
   for (let i = 0; i < maxQuestions; i++) {
     try {
       const response = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o",
         messages: messages,
       });
 
@@ -117,6 +121,7 @@ async function memoryTest(userInfo, diaryList, conversations) {
   };
 }
 
+// CDR 점수 계산 함수
 function calculateCdrScore(questionCnt, correctCnt, hintCnt) {
   let score = 1;
 
@@ -134,4 +139,4 @@ function calculateCdrScore(questionCnt, correctCnt, hintCnt) {
   return score;
 }
 
-module.exports = { memoryTest };
+module.exports = { memoryTest, createScorePrompt };
