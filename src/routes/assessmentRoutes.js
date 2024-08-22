@@ -1,23 +1,22 @@
-// 0724 ver(middelwares 경로 수정 필요)
+// 0812 ver
 const express = require('express');
-const {
-  savePRMQAssessment,
-  saveKDSQAssessment,
-  getPRMQAssessments,
-  getKDSQAssessments
-} = require('../controllers/assessmentController');
 const router = express.Router();
+const assessmentController = require('../controllers/assessmentController');
 
-// 자가진단 결과 저장 (PRMQ)
-router.post('/elderly/:userId/self-diagnosis/prmq', savePRMQAssessment);
+// 자가진단 결과 생성
+router.post('/', assessmentController.createAssessment);
 
-// 자가진단 결과 저장 (KDSQ)
-router.post('/elderly/:userId/self-diagnosis/kdsq', saveKDSQAssessment);
+// 특정 사용자의 자가진단 결과 조회 (KDSQ 또는 PRMQ)
+router.get('/user/:userId/:questionnaireType', assessmentController.getAssessmentsByUser);
 
-// PRMQ 자가진단 결과 조회
-router.get('/elderly/:userId/self-diagnosis/prmq', getPRMQAssessments);
+// 특정 보호자와 관련된 모든 자가진단 결과 조회
+router.get('/guardian/:guardianId', assessmentController.getAssessmentsByGuardian);
 
-// KDSQ 자가진단 결과 조회
-router.get('/elderly/:userId/self-diagnosis/kdsq', getKDSQAssessments);
+// 특정 자가진단 결과 삭제
+router.delete('/:id', assessmentController.deleteAssessment);
 
 module.exports = router;
+
+
+
+

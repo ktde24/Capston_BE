@@ -1,5 +1,4 @@
-// 0805(감정분석 요청 추가)
-// 실시간 음성 대화하려면 WebSocket 필요한 듯 -> Postman은 WebSocket API 테스트를 지원X
+// 0813
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
@@ -12,10 +11,10 @@ const ttsRoutes = require('./routes/ttsRoutes');
 const sttRoutes = require('./routes/sttRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const diaryRoutes = require('./routes/diaryRoutes');
-const emotionAnalysisRoutes = require('./routes/emotionAnalysisRoutes'); // 추가된 라우터
-const memoryScoreRoutes=require('./routes/memoryScoreRoutes');
+const emotionAnalysisRoutes = require('./routes/emotionAnalysisRoutes');
 const chatController = require('./controllers/chatController');
-
+const memoryScoreRoutes = require('./routes/memoryScoreRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 const app = express();
 
@@ -34,8 +33,15 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/tts', ttsRoutes);
 app.use('/api/stt', sttRoutes);
 app.use('/api/diary', diaryRoutes);
-app.use('/api/emotion-analysis', emotionAnalysisRoutes); // 새로운 감정 분석 라우터 추가
-app.use('/api/memoryscore',memoryScoreRoutes);
+app.use('/api/emotion-analysis', emotionAnalysisRoutes);
+app.use('/api/memoryscore', memoryScoreRoutes);
+app.use('/api/reports', reportRoutes);
+
+// 공통 에러 핸들링 미들웨어 추가
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send({ error: '오류 발생' });
+});
 
 // HTTP 서버 생성
 const server = http.createServer(app);
