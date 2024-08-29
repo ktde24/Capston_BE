@@ -1,4 +1,4 @@
-//0813 ver
+//0829 ver - JWT 토큰에서 userId 추출하도록
 const asyncHandler = require('express-async-handler');
 const axios = require('axios');
 const EmotionAnalysis = require('../models/EmotionAnalysis');
@@ -17,7 +17,7 @@ const analyzeDiary = async (diary) => {
 
 // 일기 생성 및 감정 분석 결과 저장
 const createEmotionAnalysis = asyncHandler(async (req, res) => {
-  const { userId } = req.body;
+  const userId = req.user._id; // JWT 토큰에서 추출한 userId
   const { diaryId } = req.params;
 
   try {
@@ -44,7 +44,8 @@ const createEmotionAnalysis = asyncHandler(async (req, res) => {
 
 // 감정 분석 결과 조회
 const getEmotionAnalysisByDate = asyncHandler(async (req, res) => {
-  const { userId, date } = req.params;
+  const userId = req.user._id; // JWT 토큰에서 추출한 userId
+  const { date } = req.params;
   const startDate = new Date(date);
   const endDate = new Date(date);
   endDate.setDate(endDate.getDate() + 1); // 다음 날로 설정하여 당일 자정까지 포함
@@ -65,4 +66,3 @@ const getEmotionAnalysisByDate = asyncHandler(async (req, res) => {
 });
 
 module.exports = { createEmotionAnalysis, getEmotionAnalysisByDate };
-

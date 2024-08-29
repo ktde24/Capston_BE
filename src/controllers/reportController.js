@@ -1,14 +1,13 @@
+// 0829 ver - JWT 토큰에서 userId 추출하도록
 const asyncHandler = require('express-async-handler');
 const Report = require('../models/Report');
 const Diary = require('../models/Diary');
 const MemoryScore = require('../models/MemoryScore');
 const EmotionAnalysis = require('../models/EmotionAnalysis');
-const GuardianUser = require('../models/GuardianUser');
-const ElderlyUser = require('../models/ElderlyUser');
 
 // 리포트 생성
 const createReport = asyncHandler(async (req, res) => {
-    const userId = req.params.userId;
+    const userId = req.user._id; // JWT 토큰에서 추출한 userId
     const { date } = req.body; // 클라이언트에서 전송된 날짜 (예: "2024-08-12")
 
     try {
@@ -17,7 +16,7 @@ const createReport = asyncHandler(async (req, res) => {
         const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
         const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
 
-        // 해당 날짜의 일기 가져오기 (시간 무시하고 월, 일만 비교)
+        // 해당 날짜의 일기 가져오기
         const diary = await Diary.findOne({
             userId: userId,
             date: {
@@ -70,17 +69,11 @@ const createReport = asyncHandler(async (req, res) => {
 
 // 특정 사용자의 모든 리포트 조회
 const getAllReports = asyncHandler(async (req, res) => {
-    const userId = req.params.userId;
+    const userId = req.user._id; // JWT 토큰에서 추출한 userId
   
     try {
-      // 사용자 확인
-      const user = await ElderlyUser.findById(userId);
-      if (!user) {
-        return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
-      }
-  
       // 사용자의 모든 리포트 조회
-      const reports = await Report.find({ userId: user._id }).populate('diaryId memoryScoreId').exec();
+      const reports = await Report.find({ userId: userId }).populate('diaryId memoryScoreId').exec();
   
       if (!reports || reports.length === 0) {
         return res.status(404).json({ message: '리포트를 찾을 수 없습니다.' });
@@ -94,16 +87,11 @@ const getAllReports = asyncHandler(async (req, res) => {
   });
   
   // 특정 날짜의 리포트 조회 (시간 부분은 무시하고 월, 일까지만 비교)
-  const getReportsByDate = asyncHandler(async (req, res) => {
-    const { userId, date } = req.params;
+const getReportsByDate = asyncHandler(async (req, res) => {
+    const userId = req.user._id; // JWT 토큰에서 추출한 userId
+    const { date } = req.params;
   
     try {
-      // 사용자 확인
-      const user = await ElderlyUser.findById(userId);
-      if (!user) {
-        return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
-      }
-  
       // 지정된 날짜의 리포트 조회 (날짜를 기준으로 조회, 시간 부분은 무시)
       const targetDate = new Date(date);
       const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
@@ -111,7 +99,7 @@ const getAllReports = asyncHandler(async (req, res) => {
   
       // Report를 emotions 필드를 포함해 조회
       const reports = await Report.find({
-        userId: user._id,
+        userId: userId,
         date: {
           $gte: startOfDay,
           $lt: endOfDay,

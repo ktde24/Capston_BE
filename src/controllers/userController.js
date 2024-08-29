@@ -1,4 +1,5 @@
-// 0725 ver (노인이 입력한 본인 이름과 보호자의 전화번호가 보호자가 입력한 사항과 일치한 경우에만 노인 회원가입 가능)
+// 0829 ver - 아이디 중복 방지 추가
+//노인이 입력한 본인 이름과 보호자의 전화번호가 보호자가 입력한 사항과 일치한 경우에만 노인 회원가입 가능
 
 const asyncHandler = require('express-async-handler');
 const bcrypt = require('bcrypt');
@@ -17,6 +18,12 @@ const getAllElderlyUsers = asyncHandler(async (req, res) => {
 // ElderlyUser 가입
 const addElderlyUser = asyncHandler(async (req, res) => {
   const { id, password, name, guardianPhone } = req.body;
+
+  // id 중복 체크
+  const existingElderlyUser = await ElderlyUser.findOne({ id });
+  if (existingElderlyUser){
+    return res.status(400).json({ error: '이미 존재하는 ID입니다.' });
+  }
 
   // guardianPhone이 유효한지 확인하고, 보호자가 입력한 노인 이름과 일치하는지 확인
   const guardian = await GuardianUser.findOne({ phone: guardianPhone, elderlyName: name });
@@ -71,7 +78,7 @@ const addGuardianUser = asyncHandler(async (req, res) => {
   // id 중복 여부 확인
   const existingId = await GuardianUser.findOne({ id });
   if (existingId) {
-    return res.status(400).json({ error: '존재하는 ID입니다.' });
+    return res.status(400).json({ error: '이미 존재하는 ID입니다.' });
   }
 
   // 비밀번호 해싱

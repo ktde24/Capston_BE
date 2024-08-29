@@ -1,22 +1,22 @@
-// 0813ver
+// 0829ver - 미들웨어 추가
 
 const express = require('express');
 const router = express.Router();
 const { getAllDiaries, getDiaryDate, getDiary, deleteDiary, updateDiary } = require('../controllers/diaryController');
 
 // 사용자별 모든 일기 조회
-router.get('/:userId', getAllDiaries);
+router.get('/', getAllDiaries);
 
 // 날짜별 일기 조회
-router.get('/:userId/:date', getDiaryDate);
+router.get('/:date', getDiaryDate);
 
 // 특정 일기 조회
-router.get('/:userId/:diaryId', getDiary);
+router.get('/:diaryId', getDiary);
 
 // 일기 삭제
-router.delete('/:userId/:diaryId', deleteDiary);
+router.delete('/:diaryId', deleteDiary);
 
 // 일기 수정
-router.patch('/:userId/:diaryId', updateDiary);
+router.patch('/:diaryId', updateDiary);
 
 module.exports = router;
