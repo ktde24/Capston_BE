@@ -1,12 +1,7 @@
 // 0829ver
 const express = require('express');
 const router = express.Router();
-const {
-    createAssessment,
-    getAssessmentsByUser,
-    getAssessmentsByGuardian,
-    deleteAssessment
-  } = require('../controllers/assessmentController');
+const assessmentController = require('../controllers/assessmentController');
 const { protect } = require('../middleware/authMiddleware'); // JWT 검증 미들웨어
 
 // 자가진단 결과 생성

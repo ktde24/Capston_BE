@@ -34,14 +34,13 @@ async function createScorePrompt(userInfo, diaryList) {
 보호자 주소: ${userInfo.address}, 보호자 생일: ${userInfo.birth}, 보호자 직업: ${userInfo.job}, 사용자 이름: ${userInfo.elderlyName}
 
 <일기 내용>`;
-  
+
   diaryList.forEach(diary => {
     score_prompt += `\n- 일기 날짜: ${diary.date}, 일기 내용: ${diary.content}`;
   });
 
   return score_prompt;
 }
-
 
 // 기억 테스트 함수
 async function memoryTest(userInfo, diaryList, conversations) {
@@ -57,9 +56,18 @@ async function memoryTest(userInfo, diaryList, conversations) {
 
   try {
       const response = await openai.chat.completions.create({
-          model: "gpt-4o",
+          model: "gpt-4o", 
           messages: messages,
+          temperature: 0.7,  // Playground 기본값
+          max_tokens: 256,  // 필요에 따라 조정
+          top_p: 1.0,  // Playground 기본값
+          frequency_penalty: 0,  // Playground 기본값
+          presence_penalty: 0,  // Playground 기본값
       });
+
+      //console.log("OpenAI Response: ", JSON.stringify(response, null, 2));
+      //console.log("OpenAI Response Message: ", response.choices[0].message);
+
 
       // 응답 데이터 추출
       if (response.choices && response.choices[0] && response.choices[0].message) {
@@ -76,7 +84,6 @@ async function memoryTest(userInfo, diaryList, conversations) {
       throw new Error('ChatGPT API 응답을 받지 못했습니다.');
   }
 }
-
 
 // CDR 점수 계산 함수
 function calculateCdrScore(questionCnt, correctCnt, hintCnt) {
