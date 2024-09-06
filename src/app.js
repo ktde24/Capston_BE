@@ -1,8 +1,9 @@
-// 0813
+// 0829 - middleware 추가
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const cors = require('cors');
+const { protect } = require('./middleware/authMiddleware');
 const connectDB = require('./config/db');
 const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
@@ -30,15 +31,15 @@ app.use(express.static("public"));
 
 // 라우터 설정
 app.use('/api/users', userRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/assessments', assessmentRoutes);
-app.use('/api/chat', chatRoutes);
+app.use('/api/auth', protect, authRoutes);
+app.use('/api/assessments', protect,assessmentRoutes);
+app.use('/api/chat', protect,chatRoutes);
 app.use('/api/tts', ttsRoutes);
 app.use('/api/stt', sttRoutes);
-app.use('/api/diary', diaryRoutes);
-app.use('/api/emotion-analysis', emotionAnalysisRoutes);
-app.use('/api/memoryscore', memoryScoreRoutes);
-app.use('/api/reports', reportRoutes);
+app.use('/api/diary', protect, diaryRoutes);
+app.use('/api/emotion-analysis', protect, emotionAnalysisRoutes);
+app.use('/api/memoryscore', protect, memoryScoreRoutes);
+app.use('/api/reports', protect, reportRoutes);
 
 // 공통 에러 핸들링 미들웨어 추가
 app.use((err, req, res, next) => {
