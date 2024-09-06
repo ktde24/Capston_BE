@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Voice Chat</title>
+</head>
+<body>
+    <h1>WebSocket Voice Chat</h1>
+    <button id="startRecord">Start Recording</button>
+    <button id="stopRecord" disabled>Stop Recording</button>
+    <p id="status"></p>
+    <div id="transcripts">
+        <h2>Transcripts</h2>
+        <div id="userText"></div>
+        <div id="gptText"></div>
+    </div>
+    <audio id="audioPlayback" controls></audio>
+
+    <script>
+        const startRecordButton = document.getElementById('startRecord');
+        const stopRecordButton = document.getElementById('stopRecord');
+        const statusElement = document.getElementById('status');
+        const userTextElement = document.getElementById('userText');
+        const gptTextElement = document.getElementById('gptText');
+        const audioPlayback = document.getElementById('audioPlayback');
+
+        let mediaRecorder;
+        let audioChunks = [];
+        const userId = '66a0abffd1730afe04008e23'; // 실제 사용자 ID를 설정
+        let sessionId = null; // 세션 ID 초기화
+
+        const ws = new WebSocket('ws://localhost:3000/api/chat');
+
+        ws.onopen = () => {
+            console.log('Connected to WebSocket server');
+            // 사용자 ID와 세션 ID를 서버에 전송
+            ws.send(JSON.stringify({ userId, sessionId }));
+        };
+
+        ws.onmessage = (event) => {
+            if (event.data instanceof Blob) {
+                console.log('Received audio blob');
+                const audioBlob = new Blob([event.data], { type: 'audio/mp3' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                audioPlayback.src = audioUrl;
+            } else {
+                const message = JSON.parse(event.data);
+                if (message.type === 'userText') {
+                    userTextElement.textContent = `User: ${message.userText}`;
+                } else if (message.type === 'gptText') {
+                    gptTextElement.textContent = `GPT: ${message.gptText}`;
+                } else if (message.type === 'response') {
+                    userTextElement.textContent = `User: ${message.userText}`;
+                    gptTextElement.textContent = `GPT: ${message.gptText}`;
+                    const audioBlob = new Blob([new Uint8Array(message.audioContent.data)], { type: 'audio/mp3' });
+                    audioPlayback.src = URL.createObjectURL(audioBlob);
+                    sessionId = message.sessionId; // 세션 ID 저장
+                } else if (message.type === 'error') {
+                    console.error('Error message:', message.message);
+                }
+            }
+        };
+
+        ws.onclose = () => {
+            console.log('WebSocket connection closed');
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        startRecordButton.addEventListener('click', async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                audioChunks = [];
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const buffer = new Uint8Array(reader.result);
+                    console.log('Sending audio buffer:', buffer);
+                    ws.send(buffer);
+                    statusElement.textContent = 'Audio sent, waiting for response...';
+                };
+                reader.readAsArrayBuffer(audioBlob);
+            };
+
+            mediaRecorder.start();
+            startRecordButton.disabled = true;
+            stopRecordButton.disabled = false;
+            statusElement.textContent = 'Recording...';
+        });
+
+        stopRecordButton.addEventListener('click', () => {
+            mediaRecorder.stop();
+            startRecordButton.disabled = false;
+            stopRecordButton.disabled = true;
+        });
+    </script>
+</body>
+</html>

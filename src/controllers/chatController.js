@@ -1,7 +1,7 @@
 // 0807 ver(대화, 세션 관리)
 // JSON 응답과 Binary 데이터를 별도로 전송하여 클라이언트에서 이를 각각 처리할 수 있도록
 
-const { callChatgpt } = require('../utils/chatgpt');
+const { callChatgpt} = require('../utils/chatgpt');
 const { speechToText } = require('../utils/stt');
 const { textToSpeechConvert } = require('../utils/tts');
 const ElderlyUser = require('../models/ElderlyUser');

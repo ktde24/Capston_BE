@@ -10,7 +10,7 @@ const mongoose = require('mongoose');
 
 // 기억 테스트 시작
 const startMemoryTest = asyncHandler(async (req, res) => {
-  const userId = req.params.userId;
+  const userId = req.params.userId.trim();
   const msg = req.body.message;
 
   let conversations = []; // 테스트 대화 저장용
@@ -21,7 +21,9 @@ const startMemoryTest = asyncHandler(async (req, res) => {
     });
   }
 
-  let today = new Date();
+  let today = new Date(2024,7,27);
+  //let today = new Date();
+  console.log(today);
   let diaryList = [];
 
   try {
@@ -31,16 +33,21 @@ const startMemoryTest = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
     }
 
+    console.log(user);
+
     // 보호자 정보 가져오기
     const guardian = await GuardianUser.findOne({ phone: user.guardianPhone });
     if (!guardian) {
       return res.status(404).json({ message: '보호자 정보를 불러오는 데 실패했습니다.' });
     }
 
+    console.log(guardian);
+
     // 3일치 일기 가져오기
     for (let i = 0; i < 3; i++) {
       let currentDate = new Date(today);
       currentDate.setDate(today.getDate() - i);
+      console.log(currentDate);
 
       let startOfDay = new Date(currentDate.setHours(0, 0, 0, 0));
       let endOfDay = new Date(currentDate.setHours(23, 59, 59, 999));
@@ -50,6 +57,8 @@ const startMemoryTest = asyncHandler(async (req, res) => {
         diaryList.push(diary);
       }
     }
+
+    console.log(diaryList);
 
     // 이미 오늘의 기억 점수가 기록되었는지 확인
     const existingMemoryScore = await MemoryScore.findOne({

@@ -94,7 +94,7 @@ const getAllReports = asyncHandler(async (req, res) => {
   });
   
   // 특정 날짜의 리포트 조회 (시간 부분은 무시하고 월, 일까지만 비교)
-  const getReportsByDate = asyncHandler(async (req, res) => {
+const getReportsByDate = asyncHandler(async (req, res) => {
     const { userId, date } = req.params;
   
     try {

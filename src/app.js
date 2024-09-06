@@ -25,6 +25,9 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
+// message.html 실행 테스트
+app.use(express.static("public"));
+
 // 라우터 설정
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
