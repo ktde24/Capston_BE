@@ -10,7 +10,7 @@ const { protect } = require('../middleware/authMiddleware'); // JWT 검증 미�
 // 텍스트 기반 대화 처리
 router.post('/text', protect, handleChat);
 
-// module.exports = router;
+module.exports = router;
 
 
 

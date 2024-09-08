@@ -9,6 +9,7 @@
     <h1>WebSocket Voice Chat</h1>
     <button id="startRecord">Start Recording</button>
     <button id="stopRecord" disabled>Stop Recording</button>
+    <button id="endRecord" disabled>End Recording</button>
     <p id="status"></p>
     <div id="transcripts">
         <h2>Transcripts</h2>
@@ -24,6 +25,7 @@
         const userTextElement = document.getElementById('userText');
         const gptTextElement = document.getElementById('gptText');
         const audioPlayback = document.getElementById('audioPlayback');
+        const endRecordButton = document.getElementById('endRecord');
 
         let mediaRecorder;
         let audioChunks = [];
@@ -94,6 +96,7 @@
             mediaRecorder.start();
             startRecordButton.disabled = true;
             stopRecordButton.disabled = false;
+            endRecordButton.disabled=false;
             statusElement.textContent = 'Recording...';
         });
 
@@ -101,6 +104,19 @@
             mediaRecorder.stop();
             startRecordButton.disabled = false;
             stopRecordButton.disabled = true;
+            endRecordButton.disabled=false;
+        });
+
+        endRecordButton.addEventListener('click',()=>{
+            mediaRecorder.stop();
+            
+            statusElement.textContent = '대화를 종료하고 일기를 생성합니다.';
+            startRecordButton.disabled = true;
+            stopRecordButton.disabled = true;
+            endRecordButton.disabled=true;
+
+            //종료 메시지 보내기
+            ws.send(JSON.stringify({ type: 'endConversation', userId, sessionId }));
         });
     </script>
 </body>

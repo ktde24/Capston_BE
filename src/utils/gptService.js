@@ -5,9 +5,12 @@ const ChatSession = require('../models/ChatSession');
 const Diary = require('../models/Diary');
 
 // 프롬프트 설정
-const prompt = `
+// Your role에 isEnd 관련 프롬프트 임의로 넣어놨음
+let prompt = `
 <Your role> 
-A helpful assistant that assists elderly users by regularly engaging them in conversations, recording their daily activities, monitoring their health, and conveying important messages to their family members. </Your role> 
+A helpful assistant that assists elderly users by regularly engaging them in conversations, recording their daily activities, monitoring their health, and conveying important messages to their family members. 
+If the value of isEnd given below is 1, stop the conversation and generate the output. If isEnd is 0, keep conversation going.
+</Your role> 
 <Requirements> You should ask about his or her daily life naturally so that the user can feel as if they are just chatting with you. Ask one question at a time. Also, indirectly ask questions to determine the user’s health status and record as a 'health status' in a diary. After all those questions, you should finally ask what they want to say to his or her child. Please ask more than 15 questions. 
 </Requirements> 
 <Style> 
@@ -20,15 +23,18 @@ Section 3: Record health status obtained through the questionnaire. The title sh
 </Output>`;
 
 // GPT-4o 호출 함수
-async function callChatgpt(conversations) {
+async function callChatgpt(conversations, isEnd) {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
 
+  let messages = [{ role: "system", content: prompt }];
+  messages = messages.concat(conversations);
+
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
-      messages: conversations,
+      messages: messages,
     });
 
     // gpt 응답 내용을 assistant로 저장
@@ -46,13 +52,18 @@ async function callChatgpt(conversations) {
 }
 
 // 일기 생성 함수
-async function generateDiary(conversations) {
+async function generateDiary(conversations, isEnd) {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
 
+  let addition='The value of isEnd:'+isEnd;
+  prompt+=addition;
+  console.log(prompt);
   let messages = [{ role: "system", content: prompt }];
   messages = messages.concat(conversations);
+  //prompt 되돌려놓기
+  prompt = prompt.replace(addition, '');
 
   try {
     const response = await openai.chat.completions.create({
@@ -60,14 +71,25 @@ async function generateDiary(conversations) {
       messages: messages,
     });
 
-    const fullResponse = response.choices[0].message.content;
+    if(isEnd==0){//대화 진행
+      // gpt 응답 내용을 assistant로 저장
+      conversations.push({
+        role: "assistant",
+        content: response.choices[0].message.content,
+      });
 
-    // 파싱 로직
-    const diary = extractSection(fullResponse, '오늘의 일기');
-    const messageToChild = extractSection(fullResponse, '자녀에게 하고 싶은 말');
-    const healthStatus = extractSection(fullResponse, '건강 상태');
+      return response.choices[0].message.content;
+    }
+    else{//일기 생성
+      const fullResponse = response.choices[0].message.content;
 
-    return { diary, messageToChild, healthStatus };
+      // 파싱 로직
+      const diary = extractSection(fullResponse, '오늘의 일기');
+      const messageToChild = extractSection(fullResponse, '자녀에게 하고 싶은 말');
+      const healthStatus = extractSection(fullResponse, '건강 상태');
+
+      return { diary, messageToChild, healthStatus };
+    }
 
   } catch (error) {
     console.error('Chatgpt API를 불러오는 과정에서 에러 발생', error);

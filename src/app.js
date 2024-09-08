@@ -31,7 +31,7 @@ app.use(express.static("public"));
 
 // 라우터 설정
 app.use('/api/users', userRoutes);
-app.use('/api/auth', protect, authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/assessments', protect,assessmentRoutes);
 app.use('/api/chat', protect,chatRoutes);
 app.use('/api/tts', ttsRoutes);
