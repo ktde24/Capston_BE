@@ -43,21 +43,20 @@ const createEmotionAnalysis = asyncHandler(async (req, res) => {
 });
 
 // 감정 분석 결과 조회
-const getEmotionAnalysisByDate = asyncHandler(async (req, res) => {
+const getEmotionAnalysisByDiaryId = asyncHandler(async (req, res) => {
   const userId = req.user._id; // JWT 토큰에서 추출한 userId
-  const { date } = req.params;
-  const startDate = new Date(date);
-  const endDate = new Date(date);
-  endDate.setDate(endDate.getDate() + 1); // 다음 날로 설정하여 당일 자정까지 포함
+  const { diaryId } = req.params; // 일기 ID 추출
 
   try {
+    // 일기 ID로 감정 분석 결과 조회
     const analyses = await EmotionAnalysis.find({
       userId,
-      createdAt: {
-        $gte: startDate,
-        $lt: endDate
-      }
+      diaryId  // diaryId 기반으로 검색
     });
+
+    if (analyses.length === 0) {
+      return res.status(404).json({ message: '해당 일기에 대한 감정 분석 결과가 없습니다.' });
+    }
 
     res.status(200).json(analyses);
   } catch (error) {
@@ -65,4 +64,4 @@ const getEmotionAnalysisByDate = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { createEmotionAnalysis, getEmotionAnalysisByDate };
+module.exports = { createEmotionAnalysis, getEmotionAnalysisByDiaryId };

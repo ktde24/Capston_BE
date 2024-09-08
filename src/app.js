@@ -28,7 +28,7 @@ app.use(express.json());
 
 // 라우터 설정
 app.use('/api/users', userRoutes);
-app.use('/api/auth', protect, authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/assessments', protect,assessmentRoutes);
 app.use('/api/chat', protect,chatRoutes);
 app.use('/api/tts', ttsRoutes);
@@ -41,7 +41,8 @@ app.use('/api/reports', protect, reportRoutes);
 // 공통 에러 핸들링 미들웨어 추가
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send({ error: '오류 발생' });
+  const statusCode = err.statusCode || 500;
+  res.status(statusCode).json({ error: err.message || '서버 오류' });
 });
 
 // HTTP 서버 생성
