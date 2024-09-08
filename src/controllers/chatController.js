@@ -1,12 +1,14 @@
 // 0807 ver(대화, 세션 관리)
 // JSON 응답과 Binary 데이터를 별도로 전송하여 클라이언트에서 이를 각각 처리할 수 있도록
 
-const { callChatgpt, generateDiary } = require("../utils/chatgpt");
+const { generateDiary } = require("../utils/chatgpt");
 const { speechToText } = require("../utils/stt");
 const { textToSpeechConvert } = require("../utils/tts");
 const ElderlyUser = require("../models/ElderlyUser");
 const ChatSession = require("../models/ChatSession");
+const Diary = require("../models/Diary");
 const { v4: uuidv4 } = require("uuid");
+const mongoose = require('mongoose');
 
 exports.handleWebSocketMessage = async (ws, message) => {
   try {
@@ -15,7 +17,8 @@ exports.handleWebSocketMessage = async (ws, message) => {
       const { userId, sessionId } = data;
 
       ws.userId = userId;
-      ws.sessionId = sessionId;
+      // 세션 ID가 이미 있으면 유지하고, 없으면 새로운 세션 ID를 생성
+      ws.sessionId = sessionId||ws.sessionId||uuidv4();
 
       const user = await ElderlyUser.findById(userId);
       if (!user) {
@@ -28,10 +31,6 @@ exports.handleWebSocketMessage = async (ws, message) => {
         return;
       }
 
-      // 세션 ID가 없는 경우 새로 생성
-      if (!sessionId) {
-        ws.sessionId = uuidv4();
-      }
 
       //대화 세션 종료 확인
       if (data.type == "endConversation") {
@@ -57,10 +56,10 @@ exports.handleWebSocketMessage = async (ws, message) => {
               healthStatus: diaryData.healthStatus,
             });
             await newDiary.save();
+            console.log(newDiary);
+            await handleEndConversation(ws, userId,newDiary);
+            return;
           }
-
-          await handleEndConversation(ws, userId,diaryData);
-          return;
         } catch (error) {
           console.error("일기 생성 중 오류 발생:", error);
           ws.send(JSON.stringify({ error: { code: 500, message: "오류 발생" } }));
@@ -132,10 +131,10 @@ exports.handleWebSocketMessage = async (ws, message) => {
   }
 };
 
-async function handleEndConversation(ws, userId,diaryData) {
+async function handleEndConversation(ws, userId,newDiary) {
   try {
     console.log(`Ending conversation for user: ${userId}`);
-    ws.send(JSON.stringify(diaryData));
+    ws.send(JSON.stringify(newDiary));
 
   } catch (error) {
     console.error("Error ending conversation:", error);
