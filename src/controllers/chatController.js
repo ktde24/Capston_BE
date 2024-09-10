@@ -89,7 +89,7 @@ exports.handleWebSocketMessage = async (ws, message) => {
         chatSession = new ChatSession({
           userId: userId,
           sessionId: sessionId,
-          messages: [],
+          messages: [{ role: 'assistant', content: '안녕하세요! 저는 소담이에요! 오늘 어떤 하루를 보내셨나요?'}],
         });
       }
       chatSession.messages.push({
