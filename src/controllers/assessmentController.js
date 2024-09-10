@@ -57,6 +57,38 @@ exports.getAssessmentsByUser = asyncHandler(async (req, res) => {
   }
 });
 
+// 특정 날짜에 해당하는 자가진단 결과 조회
+exports.getAssessmentsByDate = asyncHandler(async (req, res) => {
+  try {
+    const { date, questionnaireType } = req.query; // 날짜와 설문 유형을 쿼리로 받음
+    const userId = req.user._id; // JWT 토큰에서 추출한 userId
+
+    // 조회할 날짜의 시작과 끝을 설정
+    const startDate = new Date(date);
+    const endDate = new Date(date);
+    endDate.setDate(endDate.getDate() + 1); // 다음 날로 설정하여 당일 자정까지 포함
+
+    // 자가진단 결과 조회 (지정된 날짜와 설문 유형에 따른 필터링)
+    const assessments = await Assessment.find({
+      userId,
+      questionnaireType,
+      date: {
+        $gte: startDate,  // 지정한 날짜의 00:00:00
+        $lt: endDate      // 다음 날 00:00:00 전까지
+      }
+    });
+
+    if (assessments.length === 0) {
+      return res.status(404).json({ message: '해당 날짜에 자가진단 결과를 찾을 수 없습니다.' });
+    }
+
+    res.status(200).json({ data: assessments });
+  } catch (error) {
+    res.status(500).json({ message: '자가진단 결과 조회 중 오류가 발생했습니다.', error });
+  }
+});
+
+
 // 특정 보호자가 관련된 모든 자가진단 결과 조회
 exports.getAssessmentsByGuardian = asyncHandler(async (req, res) => {
   try {

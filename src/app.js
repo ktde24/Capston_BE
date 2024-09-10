@@ -44,7 +44,8 @@ app.use('/api/reports', protect, reportRoutes);
 // 공통 에러 핸들링 미들웨어 추가
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send({ error: '오류 발생' });
+  const statusCode = err.statusCode || 500;
+  res.status(statusCode).json({ error: err.message || '서버 오류' });
 });
 
 // HTTP 서버 생성
