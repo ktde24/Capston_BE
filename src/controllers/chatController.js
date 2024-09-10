@@ -10,6 +10,31 @@ const Diary = require("../models/Diary");
 const { v4: uuidv4 } = require("uuid");
 const mongoose = require('mongoose');
 
+//소담이 먼저 말 걸어줌
+async function initMessage(ws,userId, sessionId){
+  //대화 세션 찾기
+  let chatSession = await ChatSession.findOne({
+    userId: userId,
+    sessionId:sessionId,
+  });
+  if (!chatSession) {
+    let audioContent=await textToSpeechConvert('안녕하세요! 저는 소담이에요! 오늘 어떤 하루를 보내셨나요?');
+
+  ws.send(
+    JSON.stringify({
+      type: "response",
+      userText: '...',
+      gptText: '안녕하세요! 저는 소담이에요! 오늘 어떤 하루를 보내셨나요?',
+      sessionId: sessionId,
+    })
+  );
+
+  if(audioContent){
+    ws.send(audioContent);
+  }
+  }
+}
+
 exports.handleWebSocketMessage = async (ws, message) => {
   try {
     if (message.toString().startsWith("{")) {
@@ -31,6 +56,10 @@ exports.handleWebSocketMessage = async (ws, message) => {
         return;
       }
 
+      if(data.type == "startConversation"){
+        await initMessage(ws, ws.userId, ws.sessionId);
+        return;
+      }
 
       //대화 세션 종료 확인
       if (data.type == "endConversation") {
@@ -89,7 +118,7 @@ exports.handleWebSocketMessage = async (ws, message) => {
         chatSession = new ChatSession({
           userId: userId,
           sessionId: sessionId,
-          messages: [{ role: 'assistant', content: '안녕하세요! 저는 소담이에요! 오늘 어떤 하루를 보내셨나요?'}],
+          messages: [],
         });
       }
       chatSession.messages.push({

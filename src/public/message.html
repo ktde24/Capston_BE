@@ -37,7 +37,7 @@
         ws.onopen = () => {
             console.log('Connected to WebSocket server');
             // 사용자 ID와 세션 ID를 서버에 전송
-            ws.send(JSON.stringify({ userId, sessionId }));
+            ws.send(JSON.stringify({ type: 'startConversation',userId, sessionId }));
         };
 
         ws.onmessage = (event) => {
