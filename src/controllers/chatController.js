@@ -9,14 +9,20 @@ const ChatSession = require("../models/ChatSession");
 const Diary = require("../models/Diary");
 const { v4: uuidv4 } = require("uuid");
 const mongoose = require('mongoose');
+require('dotenv').config();
+const jwt = require('jsonwebtoken');
+
 
 //소담이 먼저 말 걸어줌
-async function initMessage(ws,userId, sessionId){
+async function initMessage(ws,token,sessionId){
+  const userId=getUserFromToken(token);
+
   //대화 세션 찾기
   let chatSession = await ChatSession.findOne({
     userId: userId,
     sessionId:sessionId,
   });
+
   if (!chatSession) {
     let audioContent=await textToSpeechConvert('안녕하세요! 저는 소담이에요! 오늘 어떤 하루를 보내셨나요?');
 
@@ -35,11 +41,27 @@ async function initMessage(ws,userId, sessionId){
   }
 }
 
+//token으로 user 찾기
+function getUserFromToken(token){
+  const secretKey=process.env.JWT_SECRET;
+
+  try{
+    //토큰 디코딩
+    const decoded=jwt.verify(token,secretKey);
+    return decoded.id;
+  }catch(err){
+    console.error('토큰 검증 실패',err);
+    return null;
+  }
+}
+
 exports.handleWebSocketMessage = async (ws, message) => {
   try {
     if (message.toString().startsWith("{")) {
       const data = JSON.parse(message);
-      const { userId, sessionId } = data;
+      const { token, sessionId } = data;
+
+      const userId=getUserFromToken(token);
 
       ws.userId = userId;
       // 세션 ID가 이미 있으면 유지하고, 없으면 새로운 세션 ID를 생성
@@ -57,7 +79,7 @@ exports.handleWebSocketMessage = async (ws, message) => {
       }
 
       if(data.type == "startConversation"){
-        await initMessage(ws, ws.userId, ws.sessionId);
+        await initMessage(ws, token, ws.sessionId);
         return;
       }
 
