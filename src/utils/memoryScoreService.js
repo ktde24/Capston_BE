@@ -11,7 +11,7 @@ async function createScorePrompt(userInfo, diaryList) {
 1. 각 질문은 반드시 한 번에 하나씩만 제공하세요.
 2. 사용자의 응답을 받은 후에만 다음 질문을 제공하세요.
 3. 동일하거나 비슷한 질문을 반복하지 마세요.
-4. 사용자가 질문에 제대로 답변하지 못했을 때만 힌트를 하나씩 제공합니다. 한 문제당 힌트는 최대 3개입니다.
+4. 사용자가 질문에 제대로 답변하지 못했을 때만 힌트를 하나씩 제공합니다. 한 문제당 힌트는 최대 3개입니다. 힌트에는 답이 포함되면 안됩니다. 
 5. 3일 전, 2일 전, 1일 전의 일기 내용을 바탕으로 순서대로 질문을 생성하세요.
 6. 질문1: 3일 전의 일기를 바탕으로 최근 발생한 일을 기억하는지 묻는 질문.
 7. 질문2: 2일 전의 일기를 바탕으로 기억을 묻는 질문.
@@ -26,7 +26,9 @@ async function createScorePrompt(userInfo, diaryList) {
 질문에 대한 정답 여부는 사용자에게 밝히지 않으며, 마지막에 점수를 측정해 결과를 제공합니다. 사용자가 일기와 정확하게 일치하지 않더라도, 유사한 내용을 기억하고 있다면 정답으로 인정합니다. 질문 1~4에서 오답률이 20%를 초과하면 추가 질문을 합니다.
 
 <출력>
-각 질문에 대한 응답을 받은 후에만 다음 질문을 제공하세요. 결과는 전체 질문 개수, 사용된 힌트 개수, 정답 개수, CDR 기억점수로 구분해 출력하세요.
+각 질문에 대한 응답을 받은 후에만 다음 질문을 제공하세요. 
+결과는 전체 질문 개수, 사용된 힌트 개수, 정답 개수, 정답률, CDR 기억점수로 구분해 출력하세요. CDR 기억점수는 0, 0.5, 1 중 하나입니다.
+'결과를 알려드릴게요'라고 말한 후, 결과를 출력하세요.
 
 <사용자 정보>
 보호자 주소: ${userInfo.address}, 보호자 생일: ${userInfo.birth}, 보호자 직업: ${userInfo.job}, 사용자 이름: ${userInfo.elderlyName}
@@ -85,25 +87,29 @@ async function memoryTest(userInfo, diaryList, conversations) {
 
 // CDR 점수 계산 함수
 function calculateCdrScore(questionCnt, correctCnt, hintCnt) {
-  let score = 1; // 기본값은 1 (가장 나쁜 점수)
+  let score = 0; // 기본값은 0 (가장 좋은 점수)
 
   const correctRatio = correctCnt / questionCnt;
 
+  console.log("Correct Ratio:", correctRatio);
+  
   // 정답 비율에 따른 점수 계산
   if (correctRatio >= 0.8) {
       score = 0;  // 80% 이상 정답인 경우
   } else if (correctRatio >= 0.7) {
       score = 0.5;  // 70% ~ 79% 정답인 경우
+  } else {
+    score = 1; // 70% 미만 정답인 경우
   }
 
   // 힌트 사용이 4개 이상인 경우 최소 점수는 0.5
   if (hintCnt >= 4) {
-      score = Math.max(score, 0.5);  // 최소 0.5 보장
+      score = Math.min(score, 0.5);  // 최소 0.5 보장
   }
 
-  return score;
+  console.log("Calculated CDR Score:", score); // 로그로 확인
+  return { correctRatio, score };
 }
-
 
 
 module.exports = { memoryTest, createScorePrompt, calculateCdrScore };

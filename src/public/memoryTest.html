@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기억 점수 측정 챗봇 테스트</title>
+</head>
+<body>
+    <h1>기억 점수 측정 챗봇 테스트</h1>
+
+    <!-- JWT 토큰 입력 -->
+    <label for="token">JWT 토큰 입력:</label>
+    <input type="text" id="token" value="">
+    <button id="connectWebSocket">확인</button>
+    <br><br>
+
+    <!-- 녹음 기능 -->
+    <h2>음성 녹음</h2>
+    <button id="startRecording" disabled>녹음 시작</button>
+    <button id="stopRecording" disabled>녹음 중지</button>
+
+    <!-- 기억 점수 측정 챗봇 응답 -->
+    <h2>기억 점수 측정 챗봇 응답</h2>
+    <textarea id="memoryTestBotResponse" rows="5" cols="50" readonly></textarea>
+
+    <!-- 음성 재생 영역 -->
+    <h2>TTS 변환 결과 음성</h2>
+    <audio id="ttsAudio" controls></audio>
+
+    <script>
+        let ws;
+        let isConnected = false;
+        let mediaRecorder;
+        let audioChunks = [];
+
+        // WebSocket 연결 및 JWT 인증
+        function connectWebSocket() {
+            const token = document.getElementById('token').value;
+            console.log("사용자 토큰:", token);  // 토큰 확인 로그
+
+            ws = new WebSocket('ws://localhost:3000');  // WebSocket 서버 주소
+
+            ws.onopen = () => {
+                console.log("WebSocket 연결 성공");
+
+                // JWT 인증 메시지 전송
+                ws.send(JSON.stringify({
+                    type: 'auth',
+                    token: token
+                }));
+                console.log("토큰 전송 완료");
+            };
+
+            ws.onmessage = (event) => {
+                if (event.data instanceof Blob) {
+                    // 서버로부터 음성 Blob 데이터를 수신한 경우
+                    console.log("TTS 음성 데이터 수신:", event.data);
+                    const audioUrl = URL.createObjectURL(event.data);
+                    console.log("생성된 오디오 URL:", audioUrl);
+                    const audioElement = document.getElementById('ttsAudio');
+                    audioElement.src = audioUrl;
+                    audioElement.play().then(() => {
+                        console.log("오디오 재생 성공");
+                    }).catch((error) => {
+                        console.error("오디오 재생 실패:", error);
+                    });
+                    
+                } else {
+                    // 텍스트 응답을 받았을 때
+                    const message = JSON.parse(event.data);
+                    console.log("서버 응답:", message);
+
+                    if (message.message === 'Authenticated') {
+                        isConnected = true;
+                        console.log("인증 성공:", message.message);
+                        document.getElementById('startRecording').disabled = false;
+                    } else {
+                        console.error("인증 실패 또는 다른 메시지:", message);
+                    }
+
+                    // 서버 응답이 텍스트일 경우 표시
+                    if (message.conversations) {
+                        document.getElementById('memoryTestBotResponse').value = message.messageFromChatGPT;
+                    }
+                }
+            };
+
+            ws.onclose = () => {
+                console.log("WebSocket 연결 종료");
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket 오류:', error);
+            };
+        }
+
+        // "확인" 버튼을 클릭했을 때 WebSocket 연결 시작
+        document.getElementById('connectWebSocket').addEventListener('click', () => {
+            connectWebSocket();
+        });
+
+        // 음성 녹음 시작
+        document.getElementById('startRecording').addEventListener('click', () => {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.start();
+                    console.log("녹음 시작");
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    document.getElementById('stopRecording').disabled = false;
+                    document.getElementById('startRecording').disabled = true;
+                })
+                .catch(error => {
+                    console.error('마이크 접근 실패:', error);
+                });
+        });
+
+        // 음성 녹음 중지 및 WebSocket으로 전송
+        document.getElementById('stopRecording').addEventListener('click', () => {
+            mediaRecorder.stop();
+            console.log("녹음 중지");
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                console.log("녹음된 음성 Blob:", audioBlob);  // Blob 데이터를 확인하는 로그 추가
+                audioChunks = [];  // 다음 녹음을 위해 배열 초기화
+
+                // WebSocket으로 녹음된 음성 데이터 전송
+                if (isConnected) {
+                    ws.send(audioBlob); // Blob 데이터를 그대로 WebSocket을 통해 전송
+                    console.log("음성 데이터 전송 완료");  // 전송 완료 로그
+                } else {
+                    alert('WebSocket이 연결되어 있지 않습니다.');
+                }
+
+                document.getElementById('stopRecording').disabled = true;
+                document.getElementById('startRecording').disabled = false;
+            };
+        });
+    </script>
+</body>
+</html>

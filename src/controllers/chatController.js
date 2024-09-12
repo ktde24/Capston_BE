@@ -31,7 +31,6 @@ exports.handleWebSocketMessage = async (ws, message) => {
         return;
       }
 
-
       //대화 세션 종료 확인
       if (data.type == "endConversation") {
         try {

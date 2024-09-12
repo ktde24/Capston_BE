@@ -8,6 +8,7 @@ module.exports = router;
 */
 
 // 텍스트 기반 챗봇용(임시)
+// html 파일로 테스트 증(라우터 사용X)
 
 const express = require('express');
 const router = express.Router();
