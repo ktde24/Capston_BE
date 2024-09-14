@@ -7,7 +7,8 @@ const { textToSpeechConvert } = require("../utils/tts");
 const ElderlyUser = require("../models/ElderlyUser");
 const ChatSession = require("../models/ChatSession");
 const Diary = require("../models/Diary");
-const { v4: uuidv4 } = require("const mongoose = require('mongoose');uuid");
+const { v4: uuidv4 } = require("uuid");
+const mongoose = require('mongoose');
 
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
@@ -23,21 +24,32 @@ async function initMessage(ws,token,sessionId){
     sessionId:sessionId,
   });
 
-  if (!chatSession) {
-    let audioContent=await textToSpeechConvert('안녕하세요! 저는 소담이에요! 오늘 어떤 하루를 보내셨나요?');
+  //기본 시작 멘트
+  let introMsg='안녕하세요! 저는 소담이에요! 오늘 어떤 하루를 보내셨나요?';
+  //중단 후 재시작 멘트
+  if (chatSession) {
+    let recentMsg='';
+    //마지막 대화가 챗봇의 질문으로 끝남
+    if(chatSession.messages.length%2==0){
+      recentMsg=chatSession.messages[chatSession.messages.length-1].content;
+    }
+    introMsg='다시 돌아오셨군요! 이어서 대화를 시작해봐요!'+recentMsg;
+    console.log(introMsg);
+  }
+
+  let audioContent=await textToSpeechConvert(introMsg);
 
   ws.send(
     JSON.stringify({
       type: "response",
       userText: '...',
-      gptText: '안녕하세요! 저는 소담이에요! 오늘 어떤 하루를 보내셨나요?',
+      gptText: introMsg,
       sessionId: sessionId,
     })
   );
 
   if(audioContent){
     ws.send(audioContent);
-  }
   }
 }
 
@@ -78,6 +90,27 @@ exports.handleWebSocketMessage = async (ws, message) => {
         return;
       }
 
+      //기존 세션 존재 확인
+      const today=new Date().toISOString();
+      //today: 2024-09-14T10:34:00.590Z
+      const year = today.substring(0, 4);
+      const month = today.substring(5, 7);
+      const day = today.substring(8, 10);
+    
+      const startDate = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+      const endDate = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
+
+      //해당 날짜, 유저의 기존 세션 확인
+      const existingSession = await ChatSession.findOne({
+        userId,
+        createdAt: {$gte:startDate,$lte:endDate}
+      });
+
+      //진행하던 세션 발견
+      if(existingSession){
+        ws.sessionId=existingSession.sessionId;
+      }
+
       if(data.type == "startConversation"){
         await initMessage(ws, token, ws.sessionId);
         return;
@@ -85,7 +118,7 @@ exports.handleWebSocketMessage = async (ws, message) => {
 
       //대화 세션 종료 확인
       if (data.type == "endConversation") {
-        await handleEndConversation(ws, userId,newDiary);
+        await handleEndConversation(ws, userId);
         return;
       }
     } else if (Buffer.isBuffer(message)) {
@@ -154,10 +187,9 @@ exports.handleWebSocketMessage = async (ws, message) => {
   }
 };
 
-async function handleEndConversation(ws, userId,newDiary) {
+async function handleEndConversation(ws, userId) {
   try {
     console.log(`Ending conversation for user: ${userId}`);
-    ws.send(JSON.stringify(newDiary));
 
   } catch (error) {
     console.error("Error ending conversation:", error);
