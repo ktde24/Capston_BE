@@ -7,8 +7,8 @@ const { textToSpeechConvert } = require("../utils/tts");
 const ElderlyUser = require("../models/ElderlyUser");
 const ChatSession = require("../models/ChatSession");
 const Diary = require("../models/Diary");
-const { v4: uuidv4 } = require("uuid");
-const mongoose = require('mongoose');
+const { v4: uuidv4 } = require("const mongoose = require('mongoose');uuid");
+
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
@@ -85,36 +85,8 @@ exports.handleWebSocketMessage = async (ws, message) => {
 
       //대화 세션 종료 확인
       if (data.type == "endConversation") {
-        try {
-          console.log(ws.sessionId);
-          // 사용자와 세션을 찾거나 생성
-          let chatSession = await ChatSession.findOne({ sessionId:ws.sessionId });
-
-          if(!chatSession){
-            console.log('해당 세션이 없습니다.');
-            return;
-          }
-
-          const diaryData = await generateDiary(chatSession.messages, 1);
-
-          // 새로운 일기 생성 및 저장
-          if (diaryData) {
-            const newDiary = new Diary({
-              userId: userId,
-              diaryId: new mongoose.Types.ObjectId(), // 명시적으로 고유한 diaryId 생성
-              content: diaryData.diary,
-              messageToChild: diaryData.messageToChild,
-              healthStatus: diaryData.healthStatus,
-            });
-            await newDiary.save();
-            console.log(newDiary);
-            await handleEndConversation(ws, userId,newDiary);
-            return;
-          }
-        } catch (error) {
-          console.error("일기 생성 중 오류 발생:", error);
-          ws.send(JSON.stringify({ error: { code: 500, message: "오류 발생" } }));
-        }
+        await handleEndConversation(ws, userId,newDiary);
+        return;
       }
     } else if (Buffer.isBuffer(message)) {
       const { userId, sessionId } = ws;
@@ -150,7 +122,7 @@ exports.handleWebSocketMessage = async (ws, message) => {
       });
 
       const conversations = chatSession.messages;
-      const gptResponse = await generateDiary(conversations, 0);
+      const gptResponse = await generateDiary(conversations,userId);
 
       let audioContent;
       if (gptResponse) {
