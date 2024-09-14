@@ -33,7 +33,7 @@ async function initMessage(ws,token,sessionId){
     if(chatSession.messages.length%2==0){
       recentMsg=chatSession.messages[chatSession.messages.length-1].content;
     }
-    introMsg='다시 돌아오셨군요! 이어서 대화를 시작해봐요!'+recentMsg;
+    introMsg='다시 돌아오셨군요! 이어서 대화를 시작해봐요! '+recentMsg;
     console.log(introMsg);
   }
 
