@@ -29,6 +29,7 @@ async function createScorePrompt(userInfo, diaryList) {
 각 질문에 대한 응답을 받은 후에만 다음 질문을 제공하세요. 
 결과는 전체 질문 개수, 사용된 힌트 개수, 정답 개수, 정답률, CDR 기억점수로 구분해 출력하세요. CDR 기억점수는 0, 0.5, 1 중 하나입니다.
 '결과를 알려드릴게요'라고 말한 후, 결과를 출력하세요.
+CDR 기억점수가 0.5이거나 1인 경우 자가진단을 제안하고, CDR 기억점수가 0인 경우에는 '축하합니다! 기억력이 매우 좋으시네요.' 를 출력하세요.
 
 <사용자 정보>
 보호자 주소: ${userInfo.address}, 보호자 생일: ${userInfo.birth}, 보호자 직업: ${userInfo.job}, 사용자 이름: ${userInfo.elderlyName}

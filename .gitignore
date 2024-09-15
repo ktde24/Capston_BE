@@ -9,4 +9,4 @@ yarn-error.log*
 .env
 
 # TTS
-.Google_TTS_KEY.json
+Google_TTS_KEY.json

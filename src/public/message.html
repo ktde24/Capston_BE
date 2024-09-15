@@ -29,7 +29,10 @@
 
         let mediaRecorder;
         let audioChunks = [];
-        const userId = '66a0abffd1730afe04008e23'; // 실제 사용자 ID를 설정
+   
+        //john doe
+        const token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2ZTU2ZDExZjUwYTFhYTcwMWZkNGFhYSIsImlhdCI6MTcyNjMxMTc4MywiZXhwIjoxNzI2NzQzNzgzfQ._zYGaEfAYURmef1ogP50uKcTM01jYob2pNg0yPW2RQo';
+
         let sessionId = null; // 세션 ID 초기화
 
         const ws = new WebSocket('ws://localhost:3000/api/chat');
@@ -37,7 +40,7 @@
         ws.onopen = () => {
             console.log('Connected to WebSocket server');
             // 사용자 ID와 세션 ID를 서버에 전송
-            ws.send(JSON.stringify({ userId, sessionId }));
+            ws.send(JSON.stringify({ type: 'startConversation',token, sessionId }));
         };
 
         ws.onmessage = (event) => {
@@ -81,7 +84,7 @@
             };
 
             mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' }); 
                 audioChunks = [];
                 const reader = new FileReader();
                 reader.onloadend = () => {
@@ -116,7 +119,7 @@
             endRecordButton.disabled=true;
 
             //종료 메시지 보내기
-            ws.send(JSON.stringify({ type: 'endConversation', userId, sessionId }));
+            ws.send(JSON.stringify({ type: 'endConversation', token, sessionId }));
         });
     </script>
 </body>
