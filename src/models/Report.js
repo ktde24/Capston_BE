@@ -16,18 +16,14 @@ const ReportSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
-  messages: { 
-    type: String, // 자녀에게 전하고 싶은 말
-    required: true
-  },
   cdrScore: { // 기억 점수
     type: Number,
-    required: true
+    required: false
   },
   memoryScoreId: { // MemoryScore의 _id 저장
     type: mongoose.Schema.Types.ObjectId,
     ref: 'MemoryScore',
-    required: true
+    required: false
   },
   emotions: {
     type: Map,
