@@ -12,7 +12,7 @@ const mongoose = require('mongoose');
 
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
-
+const WebSocket = require('ws'); 
 
 //소담이 먼저 말 걸어줌
 async function initMessage(ws,token,sessionId){
@@ -71,6 +71,7 @@ exports.handleWebSocketMessage = async (ws, message) => {
   try {
     if (message.toString().startsWith("{")) {
       const data = JSON.parse(message);
+      console.log(data);
       const { token, sessionId } = data;
 
       const userId=getUserFromToken(token);
@@ -135,6 +136,7 @@ exports.handleWebSocketMessage = async (ws, message) => {
 
       const audioBuffer = message;
       const userText = await speechToText(audioBuffer);
+      console.log('Converted user text:', userText);
 
       // 대화 세션 찾기 또는 생성
       let chatSession = await ChatSession.findOne({
@@ -201,3 +203,5 @@ async function handleEndConversation(ws, userId) {
     );
   }
 }
+
+//module.exports={startDiaryChatBot};

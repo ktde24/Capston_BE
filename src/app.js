@@ -18,7 +18,7 @@ const memoryScoreRoutes = require('./routes/memoryScoreRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 
 // 일기 생성 챗봇과 기억 점수 측정 챗봇을 위한 컨트롤러
-//const { startDiaryChatBot } = require('./controllers/chatController'); // 일기 생성 챗봇
+const { startDiaryChatBot,handleWebSocketMessage } = require('./controllers/chatController'); // 일기 생성 챗봇
 const { startWebSocketServer } = require('./controllers/memoryScoreController'); // 기억 점수 측정 챗봇
 
 const app = express();
@@ -48,9 +48,24 @@ app.use('/api/reports', protect, reportRoutes);
 // HTTP 서버 생성
 const server = http.createServer(app);
 
-// WebSocket 서버 생성(기억점수용) 및 연결 설정
-startWebSocketServer(server);
+const wss = new WebSocket.Server({ server });
+wss.on('connection', (ws) => {
+  console.log('WebSocket 연결이 설정되었습니다.');
 
+  // 클라이언트로부터 메시지를 받을 때 처리
+  ws.on('message', async (message) => {
+    console.log('from app.js');
+    await handleWebSocketMessage(ws, message);
+  });
+
+  // WebSocket 연결이 닫힐 때 처리
+  ws.on('close', () => {
+    console.log('WebSocket 연결이 종료되었습니다.');
+  });
+});
+
+// WebSocket 서버 생성(기억점수용) 및 연결 설정
+//startWebSocketServer(server);
 
 // 서버 실행
 const PORT = process.env.PORT || 3000;

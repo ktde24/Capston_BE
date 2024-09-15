@@ -1,4 +1,4 @@
-// 0910ver - 질문개수 최소 7, 최대 20개로 + 자녀에게 하고 싶은 말 삭제
+// 0816ver - 일기, 컨디션, 자녀에게 전하고 싶은 말 기록용 챗봇
 require('dotenv').config();
 const { OpenAI } = require("openai");
 const ChatSession = require('../models/ChatSession');
@@ -107,11 +107,11 @@ async function generateDiary(conversations,userId) {
   }
 }
 
-// 일기, 컨디션  하고 싶은 말 파싱
+// 일기, 컨디션, 자녀에게 하고 싶은 말 파싱
 function extractSection(text, title) {
-  const regex = new RegExp(`${title}\\s*([\\s\\S]*?)(?=\\n\\w+:|$)`, 'g');
+  const regex = new RegExp(`${title}[\\s\\S]*?(?=(?:Section|$))`, 'g');
   const match = regex.exec(text);
-  return match ? match[1].trim() : null;
+  return match ? match[0].replace(`${title}\n`, '').trim() : null;
 }
 
 module.exports = { callChatgpt, generateDiary };
