@@ -107,11 +107,16 @@ async function generateDiary(conversations,userId) {
   }
 }
 
-// 일기, 컨디션, 자녀에게 하고 싶은 말 파싱
+// 일기, 컨디션, 자녀에게 하고 싶은 말 파싱 
 function extractSection(text, title) {
-  const regex = new RegExp(`${title}[\\s\\S]*?(?=(?:Section|$))`, 'g');
+  //주어진 title로 시작하고, 다음 제목이나 텍스트의 끝까지 매칭
+  const regex = new RegExp(`${title}[\\s\\S]*?(?=(?:\\n\\*\\*[\\s\\S]*?\\n|$))`, 'g');
   const match = regex.exec(text);
-  return match ? match[0].replace(`${title}\n`, '').trim() : null;
+  if (match) {
+    return match[0].replace(title + '\n', '').trim();
+  }
+  
+  return null;
 }
 
 module.exports = { callChatgpt, generateDiary };

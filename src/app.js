@@ -13,15 +13,9 @@ const emotionAnalysisRoutes = require('./routes/emotionAnalysisRoutes');
 const memoryScoreRoutes = require('./routes/memoryScoreRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 
-<<<<<<< HEAD
-// 일기 생성 챗봇과 기억 점수 측정 챗봇을 위한 컨트롤러
-const { handleWebSocketMessage } = require('./controllers/chatController'); // 일기 생성 챗봇
-const { startWebSocketServer } = require('./controllers/memoryScoreController'); // 기억 점수 측정 챗봇
-=======
 // 일기 생성 챗봇과 기억 점수 측정 챗봇 컨트롤러
 const { handleWebSocketMessage } = require('./controllers/chatController');
 const { startWebSocketServer } = require('./controllers/memoryScoreController');
->>>>>>> c8ade3cc4c09908e7a30e73e7d4085e31de48232
 
 const app = express();
 
@@ -46,23 +40,8 @@ app.use('/api/emotion-analysis', emotionAnalysisRoutes);
 app.use('/api/findmemoryscore', memoryScoreRoutes);
 app.use('/api/reports', reportRoutes);
 
-// HTTP 서버 생성(확인 필요)
+// HTTP 서버 생성
 const server = http.createServer(app);
-const server2=http.createServer(app);
-
-const wss = new WebSocket.Server({ server });
-
-wss.on('connection', (ws) => {
-  console.log('Client connected');
-
-  ws.on('message', (message) => {
-    handleWebSocketMessage(ws, message);
-  });
-
-  ws.on('close', () => {
-    console.log('Client disconnected');
-  });
-});
 
 // WebSocket 서버 생성
 const wssDiary = new WebSocket.Server({ noServer: true });
