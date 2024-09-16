@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 let prompt = `
 <Your role> A helpful assistant that assists elderly users by regularly engaging them in conversations, recording their daily activities, and monitoring their health.
 </Your role> 
-<Requirements> You should ask about his or her daily life naturally so that the user feels as if they are just chatting with you. Ask one question at a time, and make sure to ask between 7 and 20 questions, depending on the flow of the conversation. If it feels like enough dialogue has taken place, you can conclude the conversation. Also, indirectly ask questions to determine the user’s health status and record this as 'health status' in a diary.
+<Requirements> You should ask about his or her daily life naturally so that the user feels as if they are just chatting with you. Ask one question at a time, and make sure to ask 5 questions, depending on the flow of the conversation. If it feels like enough dialogue has taken place, you can conclude the conversation. Also, indirectly ask questions to determine the user’s health status and record this as 'health status' in a diary.
 </Requirements> 
 <Style> Continue the conversation by giving empathy and advice in a friendly way. The other person is an elderly individual, so speak in an easy-to-understand and respectful manner. The diary should be written in accordance with the user's tone of voice and in casual language, but sentences should end with the format "~다" to maintain a proper diary style.
  </Style> 
@@ -51,7 +51,7 @@ async function callChatgpt(conversations) {
 }
 
 // 일기 생성 함수
-async function generateDiary(conversations,userId) {
+async function generateDiary(conversations, userId) {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
@@ -67,37 +67,29 @@ async function generateDiary(conversations,userId) {
 
     const fullResponse = response.choices[0].message.content;
 
-    //gpt 자체 생성(종료멘트)-> 일기 생성 후 저장
-    if(fullResponse.includes('오늘의 대화가 완료되었습니다')){
+    if (fullResponse.includes('오늘의 대화가 완료되었습니다')) {
       console.log('오늘의 질문 종료!');
       console.log(fullResponse);
-      // 파싱 로직
+      
+      // "오늘의 일기"와 "건강 상태" 파싱
       const diary = extractSection(fullResponse, '오늘의 일기');
       const healthStatus = extractSection(fullResponse, '건강 상태');
 
-      //return { diary, messageToChild, healthStatus };
-
-      // 새로운 일기 생성 및 저장
-      if (diary) {
-        const newDiary = new Diary({
-          userId: userId,
-          diaryId: new mongoose.Types.ObjectId(), // 명시적으로 고유한 diaryId 생성
-          content: diary,
-          healthStatus: healthStatus,
-        });
-        await newDiary.save();
-        console.log(newDiary);
-        return '오늘의 대화가 완료되었습니다. 멋진 일기를 만들어 드릴 테니, 꼭 확인해 주세요!';
+      if (!diary || !healthStatus) {
+        console.log('일기 또는 건강 상태 추출 실패');
+        return null;
       }
-    }
 
-    else{//대화 진행
-      // gpt 응답 내용을 assistant로 저장
+      console.log('일기:', diary);
+      console.log('건강 상태:', healthStatus);
+
+      return { diary, healthStatus };
+    } else {
       conversations.push({
         role: "assistant",
         content: response.choices[0].message.content,
       });
-    
+
       return response.choices[0].message.content;
     }
 
@@ -107,11 +99,12 @@ async function generateDiary(conversations,userId) {
   }
 }
 
-// 일기, 컨디션, 자녀에게 하고 싶은 말 파싱
+// 일기와 건강 상태 추출 함수
 function extractSection(text, title) {
-  const regex = new RegExp(`${title}[\\s\\S]*?(?=(?:Section|$))`, 'g');
+  const regex = new RegExp(`${title}[\\s\\S]*?(?=(?:###|$))`, 'g');
   const match = regex.exec(text);
   return match ? match[0].replace(`${title}\n`, '').trim() : null;
 }
+
 
 module.exports = { callChatgpt, generateDiary };

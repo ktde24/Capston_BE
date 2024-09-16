@@ -1,27 +1,30 @@
-//0829 ver - JWT 토큰에서 userId 추출하도록
 const asyncHandler = require('express-async-handler');
 const axios = require('axios');
 const EmotionAnalysis = require('../models/EmotionAnalysis');
 const Diary = require('../models/Diary');
 
 // Flask 서버로 감정 분석 요청
-const analyzeDiary = async (diary) => {
+const analyzeEmotion = async (diary) => {
   try {
+    console.log('Flask 서버로 감정 분석 요청 중...');
     const response = await axios.post('http://localhost:5000/predict', { diary });
+    console.log('Flask 서버 응답:', response.data);
     return response.data;
   } catch (error) {
-    console.error('오류 발생:', error.message);
+    console.error('Flask 서버 감정 분석 요청 중 오류 발생:', error.message);
     throw new Error('감정 분석 요청 중 오류 발생');
   }
-};
+}
+
+// 감정 분석 함수 내보내기
+module.exports = { analyzeEmotion }; 
 
 // 일기 생성 및 감정 분석 결과 저장
 const createEmotionAnalysis = asyncHandler(async (req, res) => {
-  const userId = req.user._id; // JWT 토큰에서 추출한 userId
+  const userId = req.user._id;
   const { diaryId } = req.params;
 
   try {
-    // DB에서 일기 내용 가져오기
     const diaryEntry = await Diary.findById(diaryId);
     if (!diaryEntry) {
       return res.status(404).json({ message: '일기를 찾을 수 없습니다.' });
@@ -30,9 +33,8 @@ const createEmotionAnalysis = asyncHandler(async (req, res) => {
     const diary = diaryEntry.content;
 
     // Flask 서버로 감정 분석 요청
-    const emotions = await analyzeDiary(diary);
+    const emotions = await analyzeEmotion(diary);
 
-    // 감정 분석 결과 저장
     const newEmotionAnalysis = new EmotionAnalysis({ userId, diaryId, emotions });
     await newEmotionAnalysis.save();
 
@@ -44,15 +46,11 @@ const createEmotionAnalysis = asyncHandler(async (req, res) => {
 
 // 감정 분석 결과 조회
 const getEmotionAnalysisByDiaryId = asyncHandler(async (req, res) => {
-  const userId = req.user._id; // JWT 토큰에서 추출한 userId
-  const { diaryId } = req.params; // 일기 ID 추출
+  const userId = req.user._id;
+  const { diaryId } = req.params;
 
   try {
-    // 일기 ID로 감정 분석 결과 조회
-    const analyses = await EmotionAnalysis.find({
-      userId,
-      diaryId  // diaryId 기반으로 검색
-    });
+    const analyses = await EmotionAnalysis.find({ userId, diaryId });
 
     if (analyses.length === 0) {
       return res.status(404).json({ message: '해당 일기에 대한 감정 분석 결과가 없습니다.' });
