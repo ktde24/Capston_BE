@@ -13,9 +13,9 @@ let userConversations = {}; // 사용자별로 conversations를 관리하는 객
 
 // WebSocket 서버 시작
 function startWebSocketServer(server) {
-  const wss = new WebSocket.Server({ server });
+  const wssMemory = new WebSocket.Server({ noServer: true });
 
-  wss.on('connection', (ws) => {
+  wssMemory .on('connection', (ws) => {
     console.log('클라이언트가 WebSocket에 연결되었습니다.');
     let isAuthenticated = false;
     let userId = null;
@@ -23,6 +23,7 @@ function startWebSocketServer(server) {
     ws.on('message', async (message) => {
       const receivedMessage = message.toString();  // Buffer를 문자열로 변환
       console.log('서버가 받은 메시지:', receivedMessage);  // 메시지 로그 추가
+      
       try {
         if (!isAuthenticated && typeof receivedMessage === 'string') {
           // JWT 토큰 인증 처리
@@ -237,6 +238,8 @@ function startWebSocketServer(server) {
       console.log('WebSocket connection closed.');
     });
   });
+
+  return wssMemory;
 }
 
 // WebSocket 서버를 시작하는 함수를 내보내기

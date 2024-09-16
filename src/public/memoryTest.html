@@ -38,7 +38,7 @@
             const token = document.getElementById('token').value;
             console.log("사용자 토큰:", token);  // 토큰 확인 로그
 
-            ws = new WebSocket('ws://localhost:3000');  // WebSocket 서버 주소
+            ws = new WebSocket('ws://localhost:3000/ws/memory'); // WebSocket 서버 주소
 
             ws.onopen = () => {
                 console.log("WebSocket 연결 성공");

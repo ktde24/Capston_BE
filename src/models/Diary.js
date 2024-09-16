@@ -16,10 +16,6 @@ const DiarySchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  messageToChild: {
-    type: String,
-    required: false
-  },
   healthStatus: {
     type: String,
     required: false
@@ -27,7 +23,17 @@ const DiarySchema = new mongoose.Schema({
   date: {
     type: Date,
     default: Date.now 
-  }
+  },
+  // 감정 분석 참조 추가
+  emotionAnalysisId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'EmotionAnalysis',
+  },
+  // 리포트 참조 추가
+  reportId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Report',
+  },
 });
 
 const Diary = mongoose.model('Diary', DiarySchema);
