@@ -75,6 +75,9 @@ async function generateDiary(conversations,userId) {
       const diary = extractSection(fullResponse, '오늘의 일기');
       const healthStatus = extractSection(fullResponse, '건강 상태');
 
+      console.log("오늘의 일기:", diary);
+      console.log("건강 상태:", healthStatus);
+
       //return { diary, messageToChild, healthStatus };
 
       // 새로운 일기 생성 및 저장
@@ -107,13 +110,17 @@ async function generateDiary(conversations,userId) {
   }
 }
 
-// 일기, 컨디션, 자녀에게 하고 싶은 말 파싱 
 function extractSection(text, title) {
-  //주어진 title로 시작하고, 다음 제목이나 텍스트의 끝까지 매칭
-  const regex = new RegExp(`${title}[\\s\\S]*?(?=(?:\\n\\*\\*[\\s\\S]*?\\n|$))`, 'g');
+  const regex = new RegExp(
+    `(?:\\*\\*${title}\\*\\*|### ${title})[\\s\\S]*?(?=(?:\\n(?:\\*\\*[\\s\\S]*?|### [\\s\\S]*?)\\n|$))`,
+    'g'
+  );
+
   const match = regex.exec(text);
   if (match) {
-    return match[0].replace(title + '\n', '').trim();
+    // 제목,공백 제거
+    const formattedTitle = title.includes('###') ? `### ${title}` : `**${title}**`;
+    return match[0].replace(`${formattedTitle}\n`, '').trim();
   }
   
   return null;
