@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout repository
@@ -28,12 +28,7 @@ jobs:
         echo "GOOGLE_TTS_KEY=${{ secrets.GOOGLE_TTS_KEY }}" >> $GITHUB_ENV
         echo "PORT=${{ secrets.PORT }}" >> $GITHUB_ENV
 
-    - name: Create SSH key file
-      run: |
-        echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/sodam-ec2-deploy-pipe1.pem
-        chmod 400 /tmp/sodam-ec2-deploy-pipe1.pem
-
-    - name: Transfer .env file to EC2
+    - name: Create .env file
       run: |
         echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" > .env
         echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
@@ -42,6 +37,15 @@ jobs:
         echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
         echo "GOOGLE_TTS_KEY=${{ secrets.GOOGLE_TTS_KEY }}" >> .env
         echo "PORT=${{ secrets.PORT }}" >> .env
+        cat .env 
+
+    - name: Create SSH key file
+      run: |
+        echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/sodam-ec2-deploy-pipe1.pem
+        chmod 400 /tmp/sodam-ec2-deploy-pipe1.pem
+
+    - name: Transfer .env file to EC2
+      run: |
         scp -o StrictHostKeyChecking=no -i /tmp/sodam-ec2-deploy-pipe1.pem .env ubuntu@<EC2_IP_ADDRESS>:/home/ubuntu/Sodam/.env
 
     - name: Deploy to EC2
