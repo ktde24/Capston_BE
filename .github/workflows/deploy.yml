@@ -14,13 +14,13 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    # Node.js 설정
+    
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
         node-version: '20.11.1'
 
-    # 환경 변수 설정
+   
     - name: Set environment variables
       run: |
         echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> $GITHUB_ENV
@@ -31,13 +31,13 @@ jobs:
         echo "GOOGLE_TTS_KEY=${{ secrets.GOOGLE_TTS_KEY }}" >> $GITHUB_ENV
         echo "PORT=${{ secrets.PORT }}" >> $GITHUB_ENV
 
-    # SSH 키를 임시 파일로 생성
+    
     - name: Create SSH key file
       run: |
         echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/sodam-ec2-deploy-pipe1.pem
         chmod 400 /tmp/sodam-ec2-deploy-pipe1.pem
 
-    # .env 파일을 EC2로 전송
+    
     - name: Transfer .env file to EC2
       run: |
         echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" > .env
@@ -49,7 +49,7 @@ jobs:
         echo "PORT=${{ secrets.PORT }}" >> .env
         scp -o StrictHostKeyChecking=no -i /tmp/sodam-ec2-deploy-pipe1.pem .env ubuntu@3.36.127.254:/home/ubuntu/Sodam/.env
 
-    # EC2에 SSH 접속하여 애플리케이션 배포
+   
     - name: Deploy to EC2
       run: |
         ssh -o StrictHostKeyChecking=no -i /tmp/sodam-ec2-deploy-pipe1.pem ubuntu@3.36.127.254 <<EOF
