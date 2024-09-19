@@ -27,11 +27,9 @@ Section 1: Complete a diary in Korean by summarizing the user's answers to the d
 Section 2: Record health status obtained through the questionnaire. The title should be ### 건강 상태. This should not overlap with Section 1.
 <<<<<<< HEAD
 </Output>
-
 `;
-=======
-</Output>`;
->>>>>>> 477ba57586b42ebd3c67e2bc9f1f8a1cecc48384
+
+
 
 const gptModel='gpt-4o-mini';
 
