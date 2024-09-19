@@ -109,6 +109,17 @@ const getGuardianById = asyncHandler(async (req, res) => {
   }
 });
 
+// Elderly User ID로 조회
+const getElderlyUserById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const elderly = await ElderlyUser.findOne({ id });
+  if (elderly) {
+    res.json(elderly);
+  } else {
+    res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+  }
+});
+
 module.exports = {
   getAllElderlyUsers,
   getAllGuardianUsers,
@@ -116,4 +127,5 @@ module.exports = {
   addElderlyUser,
   addGuardianUser,
   getGuardianById,
+  getElderlyUserById,
 };

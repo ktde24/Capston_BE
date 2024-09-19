@@ -10,3 +10,4 @@ yarn-error.log*
 
 # TTS
 Google_TTS_KEY.json
+Firebase_Admin.json
