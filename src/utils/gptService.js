@@ -37,8 +37,9 @@ Then, you should create 2 sections for the output:
 Section 1: Complete a diary in Korean by summarizing the user's answers to the daily life questions you asked, including details of any conversations the user had with other people. The title should be ### 오늘의 일기. Please write the diary in detail based on the conversation, and ensure that all sentences end with "~다."
 Section 2: Record health status obtained through the questionnaire. The title should be ### 건강 상태. This should not overlap with Section 1. 
 </Output>
-
 `;
+
+
 
 const gptModel='gpt-4o-mini';
 
