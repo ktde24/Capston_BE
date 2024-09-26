@@ -9,7 +9,7 @@ const EmotionAnalysis = require('../models/EmotionAnalysis');
 // Flask 서버로 감정 분석 요청
 const analyzeDiary = async (diary) => {
   try {
-    const response = await axios.post('http://43.203.212.124:5000/predict', { diary }); // 감정분석용 인스턴스 ipv4 주소 넣어줘야 함!
+    const response = await axios.post('http://3.35.173.227:5000/predict', { diary }); // 감정분석용 인스턴스 ipv4 주소 넣어줘야 함!
     return response.data;
   } catch (error) {
     console.error('오류 발생:', error.message);
