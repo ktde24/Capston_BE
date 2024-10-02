@@ -1,13 +1,14 @@
 // 0908ver - 미들웨어 추가
 
 const express = require('express');
+const { protect } = require('../middleware/authMiddleware'); // JWT 미들웨어 가져오기
 const { getAllDiaries, getDiaryDate, getDiary, deleteDiary, updateDiary, validateObjectId } = require('../controllers/diaryController');
 const router = express.Router();
 
-router.get('/', getAllDiaries); // 모든 일기 조회
-router.get('/:diaryId', validateObjectId, getDiary); // 특정 일기 조회
-router.get('/date/:date', getDiaryDate); // 특정 날짜의 일기 조회
-router.delete('/:diaryId', validateObjectId, deleteDiary); // 특정 일기 삭제
-router.put('/:diaryId', validateObjectId, updateDiary); // 특정 일기 수정
+router.get('/', protect, getAllDiaries); // JWT 인증 미들웨어 추가
+router.get('/:diaryId', protect, validateObjectId, getDiary); // JWT 인증 미들웨어 추가
+router.get('/date/:date', protect, getDiaryDate); // JWT 인증 미들웨어 추가
+router.delete('/:diaryId', protect, validateObjectId, deleteDiary); // JWT 인증 미들웨어 추가
+router.put('/:diaryId', protect, validateObjectId, updateDiary); // JWT 인증 미들웨어 추가
 
 module.exports = router;
