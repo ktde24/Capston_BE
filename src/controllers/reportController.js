@@ -5,11 +5,12 @@ const Report = require('../models/Report');
 const Diary = require('../models/Diary');
 const MemoryScore = require('../models/MemoryScore');
 const EmotionAnalysis = require('../models/EmotionAnalysis');
+const flaskIPAddr=require('../controllers/emotionAnalysisController').flaskIPAddr;
 
 // Flask 서버로 감정 분석 요청
 const analyzeDiary = async (diary) => {
   try {
-    const response = await axios.post('http://3.36.99.152:5000/predict', { diary }); // 감정분석용 인스턴스 ipv4 주소 넣어줘야 함!
+    const response = await axios.post(`http://${flaskIPAddr}:5000/predict`, { diary }); // 감정분석용 인스턴스 ipv4 주소 넣어줘야 함!
     return response.data;
   } catch (error) {
     console.error('오류 발생:', error.message);
