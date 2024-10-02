@@ -9,7 +9,7 @@ const GuardianUser = require('../models/GuardianUser');
 // JWT 생성
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '5d', // 만료 기간 
+    expiresIn: '30d', // 만료 기간 
   });
 };
 

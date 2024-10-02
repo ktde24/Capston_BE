@@ -7,7 +7,7 @@ const Diary = require('../models/Diary');
 const analyzeEmotion = async (diary) => {
   try {
     console.log('Flask 서버로 감정 분석 요청 중...');
-    const response = await axios.post('http://localhost:5000/predict', { diary });
+    const response = await axios.post('http://3.36.99.152:5000/predict', { diary });
     console.log('Flask 서버 응답:', response.data);
     return response.data;
   } catch (error) {
