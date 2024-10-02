@@ -6,7 +6,7 @@ const asyncHandler = require('express-async-handler');
 
 const sendPushNotice= asyncHandler(async (req, res) =>{
   const userId = req.user._id;  // JWT 인증을 통해 userId 추출
-  const alarm = await Alarm.findOne({ userId: id });
+  const alarm = await Alarm.findById({ userId });
   //const elderly = await ElderlyUser.findOne({ id });
   
   //사용자가 설정해놓은 시간 db에서 가져오기(elderly table에 속성 추가해야됨)
