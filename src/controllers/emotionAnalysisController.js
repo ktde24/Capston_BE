@@ -3,11 +3,13 @@ const axios = require('axios');
 const EmotionAnalysis = require('../models/EmotionAnalysis');
 const Diary = require('../models/Diary');
 
+const flaskIPAddr='3.36.99.152';
+
 // Flask 서버로 감정 분석 요청
 const analyzeEmotion = async (diary) => {
   try {
     console.log('Flask 서버로 감정 분석 요청 중...');
-    const response = await axios.post('http://3.36.99.152:5000/predict', { diary });
+    const response = await axios.post(`http://${flaskIPAddr}:5000/predict`, { diary });
     console.log('Flask 서버 응답:', response.data);
     return response.data;
   } catch (error) {
@@ -15,9 +17,6 @@ const analyzeEmotion = async (diary) => {
     throw new Error('감정 분석 요청 중 오류 발생');
   }
 }
-
-// 감정 분석 함수 내보내기
-module.exports = { analyzeEmotion }; 
 
 // 일기 생성 및 감정 분석 결과 저장
 const createEmotionAnalysis = asyncHandler(async (req, res) => {
@@ -62,4 +61,5 @@ const getEmotionAnalysisByDiaryId = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { createEmotionAnalysis, getEmotionAnalysisByDiaryId };
+// 감정 분석 함수 내보내기
+module.exports = { analyzeEmotion,createEmotionAnalysis, getEmotionAnalysisByDiaryId,flaskIPAddr};
