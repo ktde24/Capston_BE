@@ -1,4 +1,4 @@
-// 0908ver - 미들웨어 추가
+// 1002ver - 라우터 수정
 
 const express = require('express');
 const { protect } = require('../middleware/authMiddleware'); // JWT 미들웨어 가져오기
