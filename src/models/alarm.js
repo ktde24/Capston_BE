@@ -2,11 +2,6 @@ const mongoose = require('mongoose');
 
 // 알림(Push) 스키마 정의
 const AlarmSchema = new mongoose.Schema({
-  pushId: { 
-    type: Number, 
-    required: true, 
-    unique: true 
-  },  // 푸시 알림 고유 ID
   userId: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User', 
