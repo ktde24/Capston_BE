@@ -1,4 +1,4 @@
-// 1002ver - 라우터 수정
+// 1002ver - Router 수정
 
 const express = require('express');
 const { protect } = require('../middleware/authMiddleware'); // JWT 미들웨어 가져오기
