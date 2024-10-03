@@ -50,10 +50,9 @@ const addElderlyUser = asyncHandler(async (req, res) => {
     phone: guardianPhone,
     elderlyName: name,
   });
+
   if (!guardian) {
-    return res
-      .status(400)
-      .json({
+    return res.status(400).json({
         message:
           "유효하지 않은 보호자 전화번호이거나 노인 사용자의 이름이 보호자 정보와 일치하지 않습니다.",
       });
@@ -63,7 +62,6 @@ const addElderlyUser = asyncHandler(async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // 새로운 사용자 생성
-  try {
     const user = await ElderlyUser.create({
       id,
       password: hashedPassword,
@@ -75,9 +73,6 @@ const addElderlyUser = asyncHandler(async (req, res) => {
       message: "회원가입 완료",
       user,
     });
-  } catch (error) {
-    res.status(500).json({ message: "서버 오류로 회원가입에 실패했습니다." });
-  }
 });
 
 // GuardianUser 가입
