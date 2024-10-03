@@ -28,6 +28,7 @@ const loginUser = asyncHandler(async (req, res) => {
       res.json({
         _id: elderlyUser._id,
         id: elderlyUser.id,
+        name: elderlyUser.name,
         token: generateToken(elderlyUser._id),
         isElderly: true,
       });
@@ -45,6 +46,7 @@ const loginUser = asyncHandler(async (req, res) => {
       res.json({
         _id: guardianUser._id,
         id: guardianUser.id,
+        name: guardianUser.elderlyName,
         token: generateToken(guardianUser._id),
         isElderly: false,
       });
