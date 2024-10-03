@@ -31,8 +31,8 @@ const checkIdAvailability = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   // 노인 사용자와 보호자 사용자에서 동일한 아이디가 있는지 확인
-  const existingElderlyUser = await ElderlyUser.findOne({ id });
-  const existingGuardianUser = await GuardianUser.findOne({ id });
+  const existingElderlyUser = await ElderlyUser.findOne({ id:id });
+  const existingGuardianUser = await GuardianUser.findOne({ id:id });
 
   if (existingElderlyUser || existingGuardianUser) {
     return res.status(400).json({ error: "이미 존재하는 ID입니다." });

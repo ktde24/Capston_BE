@@ -1,11 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { loginElderlyUser, loginGuardianUser } = require('../controllers/authController');
+const { loginUser} = require('../controllers/authController');
 
-// 노인 사용자 로그인
-router.post('/elderly/login', loginElderlyUser);
-
-// 보호자 사용자 로그인
-router.post('/guardian/login', loginGuardianUser);
+// 로그인(노인, 보호자 모두)
+router.post('/login',loginUser);
 
 module.exports = router;
