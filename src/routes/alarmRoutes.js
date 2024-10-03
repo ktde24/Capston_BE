@@ -1,5 +1,5 @@
 const express = require('express');
-const { sendPushNotice, updateAlarmTime } = require('../controllers/alarmController');
+const { sendPushNotice, updateAlarmTime } = require('../controllers/pushController');
 const { protect } = require('../middleware/authMiddleware');  // JWT 인증 미들웨어
 const router = express.Router();
 
