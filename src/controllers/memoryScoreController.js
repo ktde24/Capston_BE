@@ -1,4 +1,4 @@
-// 1003 ver - 일기 2개만 있어도 기억 점수 측정 가능하도록
+// 1004 ver - 일기 2개만 있어도 기억 점수 측정 가능하도록
 // 기억점수 측정용(웹소켓 통신 이용)
 const WebSocket = require('ws');
 const jwt = require('jsonwebtoken');

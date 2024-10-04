@@ -1,4 +1,4 @@
-// 0826ver - 기억력 점수 측정용 챗봇
+// 1004ver - 프롬프트 수정
 require('dotenv').config();
 const { OpenAI } = require("openai");
 
