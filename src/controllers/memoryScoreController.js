@@ -1,3 +1,4 @@
+// 1003 ver - 일기 2개만 있어도 기억 점수 측정 가능하도록
 // 기억점수 측정용(웹소켓 통신 이용)
 const WebSocket = require('ws');
 const jwt = require('jsonwebtoken');
@@ -133,8 +134,9 @@ function startWebSocketServer(server) {
             if (diary) diaryList.push(diary);
           }
 
-          if (diaryList.length != 3) {
-            ws.send(JSON.stringify({ error: '최근 3일 동안의 일기를 찾을 수 없습니다.' }));
+          // 1개 일기만 있을 경우 오류 반환
+          if (diaryList.length < 2) {
+            ws.send(JSON.stringify({ error: '기억 점수를 측정하려면 최소 2개의 일기가 필요합니다.' }));
             return;
           }
 
