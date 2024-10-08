@@ -1,4 +1,4 @@
-// 0814 ver
+// 1008 ver - 정답률, 전체 질문 개수, 정답 개수, 힌트 사용 개수 추가
 const mongoose = require('mongoose');
 
 const ReportSchema = new mongoose.Schema({
@@ -23,6 +23,22 @@ const ReportSchema = new mongoose.Schema({
   memoryScoreId: { // MemoryScore의 _id 저장
     type: mongoose.Schema.Types.ObjectId,
     ref: 'MemoryScore',
+    required: false
+  },
+  correctRatio: { // 정답 비율
+    type: Number,
+    required: false
+  },
+  questionCnt: { // 전체 질문 수
+    type: Number,
+    required: false
+  },
+  correctCnt: { // 정답 개수
+    type: Number,
+    required: false
+  },
+  hintCnt: { // 사용된 힌트 개수
+    type: Number,
     required: false
   },
   emotions: {

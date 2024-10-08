@@ -188,6 +188,7 @@ const getReportsForLastDays = asyncHandler(async (req, res) => {
   }
 });
 
+/*
 // 특정 날짜의 리포트 조회
 const getReportsByDate = asyncHandler(async (req, res) => {
   const userId = req.user._id;
@@ -223,5 +224,6 @@ const getReportsByDate = asyncHandler(async (req, res) => {
     res.status(500).json({ message: '리포트 조회에 실패했습니다.' });
   }
 });
+*/
 
-module.exports = { getOrCreateReport, getReportsForLastDays, getReportsByDate };
+module.exports = { getOrCreateReport, getReportsForLastDays };
