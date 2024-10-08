@@ -1,5 +1,6 @@
 // 0908 ver(정지 버튼, 종료 버튼)
 // JSON 응답과 Binary 데이터를 별도로 전송하여 클라이언트에서 이를 각각 처리할 수 있도록
+// 다시 기존 버전
 
 const { generateDiary } = require("../utils/chatgpt");
 const { speechToText } = require("../utils/stt");
