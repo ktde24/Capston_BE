@@ -46,8 +46,9 @@ const getOrCreateReport = asyncHandler(async (req, res) => {
     }
 
     const targetDate = new Date(`${date}T00:00:00.000Z`);
-    const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
+    const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0)).toISOString();
+    const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999)).toISOString();
+
 
     const diary = await Diary.findOne({
       userId: userId,
@@ -71,15 +72,22 @@ const getOrCreateReport = asyncHandler(async (req, res) => {
 
       const memoryScore = await MemoryScore.findOne({
         userId: userId,
-        date: { $gte: startOfDay, $lte: endOfDay },
+        date: { $gte: new Date(startOfDay), $lte: new Date(endOfDay) },
       });
-
+      console.log('MemoryScore 조회 조건:', {
+        userId: userId,
+        dateRange: { $gte: new Date(startOfDay), $lte: new Date(endOfDay) }
+      });
+      
       report = new Report({
         userId,
         diaryId: diary._id,
         date: diary.date,
         cdrScore: memoryScore ? memoryScore.cdrScore : null,
         correctRatio: memoryScore ? memoryScore.correctRatio : null,
+        questionCnt: memoryScore ? memoryScore.questionCnt : null,
+        correctCnt: memoryScore ? memoryScore.correctCnt : null,
+        hintCnt: memoryScore ? memoryScore.hintCnt : null,
         memoryScoreId: memoryScore ? memoryScore._id : null,
         emotions: emotionAnalysis.emotions,
         conditions: diary.healthStatus,
@@ -159,6 +167,9 @@ const getReportsForLastDays = asyncHandler(async (req, res) => {
             date: diary.date,
             cdrScore: memoryScore ? memoryScore.cdrScore : null,
             correctRatio: memoryScore ? memoryScore.correctRatio : null,
+            questionCnt: memoryScore ? memoryScore.questionCnt : null,
+            correctCnt: memoryScore ? memoryScore.correctCnt : null,
+            hintCnt: memoryScore ? memoryScore.hintCnt : null,
             memoryScoreId: memoryScore ? memoryScore._id : null,
             emotions: emotionAnalysis.emotions,
             conditions: diary.healthStatus,

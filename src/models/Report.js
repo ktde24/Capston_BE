@@ -18,6 +18,7 @@ const ReportSchema = new mongoose.Schema({
   },
   cdrScore: { // 기억 점수
     type: Number,
+    ref: 'MemoryScore',
     required: false
   },
   memoryScoreId: { // MemoryScore의 _id 저장
@@ -27,18 +28,22 @@ const ReportSchema = new mongoose.Schema({
   },
   correctRatio: { // 정답 비율
     type: Number,
+    ref: 'MemoryScore',
     required: false
   },
   questionCnt: { // 전체 질문 수
     type: Number,
+    ref: 'MemoryScore',
     required: false
   },
   correctCnt: { // 정답 개수
     type: Number,
+    ref: 'MemoryScore',
     required: false
   },
   hintCnt: { // 사용된 힌트 개수
     type: Number,
+    ref: 'MemoryScore',
     required: false
   },
   emotions: {
