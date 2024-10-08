@@ -97,8 +97,8 @@ async function generateDiary(conversations,userId) {
       const diary = extractSection(fullResponse, '오늘의 일기');
       const healthStatus = extractSection(fullResponse, '건강 상태');
 
-      console.log("오늘의 일기:", diary);
-      console.log("건강 상태:", healthStatus);
+      //console.log("오늘의 일기:", diary);
+      //console.log("건강 상태:", healthStatus);
 
       //return { diary, messageToChild, healthStatus };
 

@@ -1,24 +1,16 @@
-// 0908 ver(정지 버튼, 종료 버튼)
-// JSON 응답과 Binary 데이터를 별도로 전송하여 클라이언트에서 이를 각각 처리할 수 있도록
-// 다시 기존 버전
-
 const { generateDiary } = require("../utils/chatgpt");
 const { speechToText } = require("../utils/stt");
 const { textToSpeechConvert } = require("../utils/tts");
 const ElderlyUser = require("../models/ElderlyUser");
 const ChatSession = require("../models/ChatSession");
-const Diary = require("../models/Diary");
 const { v4: uuidv4 } = require("uuid");
-const mongoose = require('mongoose');
-
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
-const WebSocket = require('ws'); 
+const WebSocket = require('ws');
 
 // 소담이 먼저 말 걸어줌
 async function initMessage(ws, token, sessionId) {
-  const userId = getUserFromToken(token, ws);
-  if (!userId) return;  // 토큰 검증 실패 시 종료
+  const userId = getUserFromToken(token);
 
   // 대화 세션 찾기
   let chatSession = await ChatSession.findOne({
@@ -28,11 +20,10 @@ async function initMessage(ws, token, sessionId) {
 
   // 기본 시작 멘트
   let introMsg = '안녕하세요! 저는 소담이에요! 오늘 어떤 하루를 보내셨나요?';
-  
+
   // 중단 후 재시작 멘트
   if (chatSession) {
     let recentMsg = '';
-    // 마지막 대화가 챗봇의 질문으로 끝났을 경우
     if (chatSession.messages.length % 2 == 0) {
       recentMsg = chatSession.messages[chatSession.messages.length - 1].content;
     }
@@ -42,32 +33,30 @@ async function initMessage(ws, token, sessionId) {
 
   let audioContent = await textToSpeechConvert(introMsg);
 
+  // JSON 응답 전송
   ws.send(
     JSON.stringify({
       type: "response",
-      userText: '...',
+      userText: '...', // 사용자 입력 대신 챗봇의 첫 인사로 시작
       gptText: introMsg,
       sessionId: sessionId,
     })
   );
 
+  // 음성 데이터 전송
   if (audioContent) {
     ws.send(audioContent);
   }
 }
 
-// token으로 user 찾기 및 WebSocket 연결 종료
-function getUserFromToken(token, ws) {
+// token으로 user 찾기
+function getUserFromToken(token) {
   const secretKey = process.env.JWT_SECRET;
-
   try {
-    // 토큰 디코딩
     const decoded = jwt.verify(token, secretKey);
     return decoded.id;
   } catch (err) {
     console.error('토큰 검증 실패', err);
-    ws.send(JSON.stringify({ type: 'error', message: 'Invalid token' }));
-    ws.close();  // WebSocket 연결 종료
     return null;
   }
 }
@@ -79,43 +68,47 @@ exports.handleWebSocketMessage = async (ws, message) => {
       console.log(data);
       const { token, sessionId } = data;
 
-      const userId = getUserFromToken(token, ws);
-      if (!userId) return;
-
+      const userId = getUserFromToken(token);
       ws.userId = userId;
       ws.sessionId = sessionId || ws.sessionId || uuidv4();
 
       const user = await ElderlyUser.findById(userId);
       if (!user) {
-        ws.send(
-          JSON.stringify({
-            type: "error",
-            message: "사용자를 찾을 수 없습니다.",
-          })
-        );
+        ws.send(JSON.stringify({ type: "error", message: "사용자를 찾을 수 없습니다." }));
         return;
       }
 
-      // 대화 세션 시작 처리
+      const today = new Date().toISOString();
+      const year = today.substring(0, 4);
+      const month = today.substring(5, 7);
+      const day = today.substring(8, 10);
+
+      const startDate = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+      const endDate = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
+
+      const existingSession = await ChatSession.findOne({
+        userId,
+        createdAt: { $gte: startDate, $lte: endDate }
+      });
+
+      if (existingSession) {
+        ws.sessionId = existingSession.sessionId;
+      }
+
       if (data.type == "startConversation") {
         await initMessage(ws, token, ws.sessionId);
         return;
       }
 
-      // 대화 세션 종료 처리
       if (data.type == "endConversation") {
         await handleEndConversation(ws, userId);
         return;
       }
+
     } else if (Buffer.isBuffer(message)) {
       const { userId, sessionId } = ws;
       if (!userId) {
-        ws.send(
-          JSON.stringify({
-            type: "error",
-            message: "사용자 ID가 설정되지 않았습니다.",
-          })
-        );
+        ws.send(JSON.stringify({ type: "error", message: "사용자 ID가 설정되지 않았습니다." }));
         return;
       }
 
@@ -123,40 +116,24 @@ exports.handleWebSocketMessage = async (ws, message) => {
       const userText = await speechToText(audioBuffer);
       console.log('Converted user text:', userText);
 
-      // userText가 비어 있는지 확인
-      if (!userText || userText.trim().length === 0) {
-        console.log("인식된 텍스트가 비어있습니다.");
+      if (userText.trim() === '') {
+        ws.send(JSON.stringify({ type: "error", message: "인식된 텍스트가 비어 있습니다." }));
         return;
       }
 
-      // 대화 세션 찾기 또는 생성
-      let chatSession = await ChatSession.findOne({
-        userId: userId,
-        sessionId: sessionId,
-      });
-
+      let chatSession = await ChatSession.findOne({ userId: userId, sessionId: sessionId });
       if (!chatSession) {
-        chatSession = new ChatSession({
-          userId: userId,
-          sessionId: sessionId,
-          messages: [],
-        });
+        chatSession = new ChatSession({ userId: userId, sessionId: sessionId, messages: [] });
       }
 
       chatSession.messages.push({
         role: "user",
-        content: userText, // 빈 값이 아닌 경우만 추가
+        content: userText,
         timestamp: new Date(),
       });
 
       const conversations = chatSession.messages;
       const gptResponse = await generateDiary(conversations, userId);
-
-      // gptResponse가 비어 있는지 확인
-      if (!gptResponse || gptResponse.trim().length === 0) {
-        console.log("GPT 응답이 비어있습니다.");
-        return;
-      }
 
       let audioContent;
       if (gptResponse) {
@@ -165,43 +142,44 @@ exports.handleWebSocketMessage = async (ws, message) => {
 
       await chatSession.save();
 
-      // JSON 응답 전송
+      // 사용자 텍스트 먼저 전송
       ws.send(
         JSON.stringify({
           type: "response",
-          userText,
-          gptText: gptResponse,
+          userText, // 사용자 텍스트만 먼저 전송
           sessionId,
         })
       );
 
-      // Binary 응답 전송
-      if (audioContent) {
-        ws.send(audioContent);  // audioContent를 binary 형식으로 전송
+      // GPT 응답 생성 후, GPT 텍스트 및 음성 데이터 전송
+      if (gptResponse) {
+        // GPT 응답 전송
+        ws.send(
+          JSON.stringify({
+            type: "response",
+            gptText: gptResponse, // GPT 응답 따로 전송
+            sessionId,
+          })
+        );
+
+        // TTS 음성 데이터 전송
+        if (audioContent) {
+          ws.send(audioContent); 
+        }
       }
     }
   } catch (error) {
     console.error("에러 발생:", error);
-    ws.send(
-      JSON.stringify({ type: "error", message: "처리 실패: " + error.message })
-    );
+    ws.send(JSON.stringify({ type: "error", message: "처리 실패: " + error.message }));
   }
 };
-
 
 async function handleEndConversation(ws, userId) {
   try {
     console.log(`Ending conversation for user: ${userId}`);
-    // 대화 종료 관련 작업 추가 가능
+    ws.send(JSON.stringify({ type: "info", message: "대화가 종료되었습니다." }));
   } catch (error) {
     console.error("Error ending conversation:", error);
-    ws.send(
-      JSON.stringify({
-        type: "error",
-        message: "대화 종료 실패: " + error.message,
-      })
-    );
+    ws.send(JSON.stringify({ type: "error", message: "대화 종료 실패: " + error.message }));
   }
 }
-
-// module.exports={startDiaryChatBot};
