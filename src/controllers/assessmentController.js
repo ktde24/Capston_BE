@@ -2,39 +2,67 @@
 // 0829 ver - JWT 토큰에서 userId 추출하도록
 const asyncHandler = require('express-async-handler');
 const Assessment = require('../models/Assessment');
+const ElderlyUser = require('../models/ElderlyUser');
+const GuardianUser = require('../models/GuardianUser'); 
+
 
 // 새로운 자가진단 결과 생성
 exports.createAssessment = asyncHandler(async (req, res) => {
   try {
-    const { guardianId, questionnaireType, score, date } = req.body;
-    const userId = req.user._id; // JWT 토큰에서 추출한 userId
+    const { questionnaireType, score, date } = req.body;
+    const userId = req.user._id; // JWT 토큰에서 추출한 userId (보호자 ID)
 
+    // 자가진단 유형 확인
     if (!['KDSQ', 'PRMQ'].includes(questionnaireType)) {
       return res.status(400).json({ message: 'Invalid questionnaire type' });
     }
 
-    if (questionnaireType === 'KDSQ' && !guardianId) {
-      return res.status(400).json({ message: 'Guardian ID가 필요합니다.' });
+    // 보호자용 KDSQ 자가진단인 경우
+    if (questionnaireType === 'KDSQ') {
+      // 보호자의 ID로 노인 사용자를 찾음 (보호자의 phone을 노인 사용자의 guardianPhone과 매칭)
+      const guardian = await GuardianUser.findById(userId);
+      //console.log('Guardian Data:', guardian); // guardian 정보 로그 출력
+      const elderlyUser = await ElderlyUser.findOne({ guardianPhone: guardian.phone }); // 노인 사용자 찾기
+      //console.log('ElderlyUser Data:', elderlyUser); 
+
+      if (!elderlyUser) {
+        return res.status(404).json({ message: '연동된 노인 사용자가 없습니다.' });
+      }
+
+      // 노인 사용자의 ID로 자가진단 결과 생성
+      const newAssessment = new Assessment({
+        userId: elderlyUser._id, // 연동된 노인 사용자의 ID
+        guardianId: userId, // 보호자 ID
+        questionnaireType,
+        score,
+        date
+      });
+      await newAssessment.save();
+      res.status(201).json({ message: '성공', data: newAssessment });
+
+    } else if (questionnaireType === 'PRMQ') {
+      // 노인 사용자 자가진단인 경우 (보호자가 아닌 노인 사용자 자신의 자가진단)
+      const elderlyUser = await ElderlyUser.findById(userId);
+      if (!elderlyUser) {
+        return res.status(404).json({ message: '노인 사용자를 찾을 수 없습니다.' });
+      }
+
+      const newAssessment = new Assessment({
+        userId: elderlyUser._id, // 노인 사용자 ID
+        guardianId: null, // PRMQ는 보호자 ID 필요 없음
+        questionnaireType,
+        score,
+        date
+      });
+      await newAssessment.save();
+      res.status(201).json({ message: '성공', data: newAssessment });
     }
-
-    if (questionnaireType === 'PRMQ' && guardianId) {
-      return res.status(400).json({ message: 'Guardian ID가 필요하지 않습니다.' });
-    }
-
-    const newAssessment = new Assessment({
-      userId,
-      guardianId: questionnaireType === 'KDSQ' ? guardianId : null,
-      questionnaireType,
-      score,
-      date
-    });
-
-    await newAssessment.save();
-    res.status(201).json({ message: '성공', data: newAssessment });
   } catch (error) {
     res.status(500).json({ message: '실패', error });
   }
 });
+
+
 
 // 특정 사용자의 자가진단 결과 조회
 exports.getAssessmentsByUser = asyncHandler(async (req, res) => {
@@ -60,7 +88,7 @@ exports.getAssessmentsByUser = asyncHandler(async (req, res) => {
 // 특정 날짜에 해당하는 자가진단 결과 조회
 exports.getAssessmentsByDate = asyncHandler(async (req, res) => {
   try {
-    const { date, questionnaireType } = req.query; // 날짜와 설문 유형을 쿼리로 받음
+    const { date } = req.params; // URL 경로에서 날짜를 받음
     const userId = req.user._id; // JWT 토큰에서 추출한 userId
 
     // 조회할 날짜의 시작과 끝을 설정
@@ -68,15 +96,38 @@ exports.getAssessmentsByDate = asyncHandler(async (req, res) => {
     const endDate = new Date(date);
     endDate.setDate(endDate.getDate() + 1); // 다음 날로 설정하여 당일 자정까지 포함
 
-    // 자가진단 결과 조회 (지정된 날짜와 설문 유형에 따른 필터링)
-    const assessments = await Assessment.find({
-      userId,
-      questionnaireType,
-      date: {
-        $gte: startDate,  // 지정한 날짜의 00:00:00
-        $lt: endDate      // 다음 날 00:00:00 전까지
+    // 노인 사용자와 보호자를 구분하여 자가진단 결과를 조회
+    let assessments;
+
+    // 노인 사용자인 경우
+    if (req.user.role === "elderly") {
+      assessments = await Assessment.find({
+        userId,
+        date: {
+          $gte: startDate,  // 지정한 날짜의 00:00:00
+          $lt: endDate      // 다음 날 00:00:00 전까지
+        }
+      });
+    }
+
+    // 보호자인 경우, 보호자와 연동된 노인 사용자의 자가진단 결과를 조회
+    if (req.user.role === "guardian") {
+      // 보호자의 ID로 노인 사용자를 찾음 (보호자의 phone을 노인 사용자의 guardianPhone과 매칭)
+      const guardian = await GuardianUser.findById(userId);
+      const elderlyUser = await ElderlyUser.findOne({ guardianPhone: guardian.phone }); // 노인 사용자 찾기
+
+      if (!elderlyUser) {
+        return res.status(404).json({ message: '연동된 노인 사용자가 없습니다.' });
       }
-    });
+
+      assessments = await Assessment.find({
+        userId: elderlyUser._id, // 연동된 노인 사용자의 ID로 조회
+        date: {
+          $gte: startDate,  // 지정한 날짜의 00:00:00
+          $lt: endDate      // 다음 날 00:00:00 전까지
+        }
+      });
+    }
 
     if (assessments.length === 0) {
       return res.status(404).json({ message: '해당 날짜에 자가진단 결과를 찾을 수 없습니다.' });
@@ -84,34 +135,12 @@ exports.getAssessmentsByDate = asyncHandler(async (req, res) => {
 
     res.status(200).json({ data: assessments });
   } catch (error) {
+    console.error('자가진단 조회 오류:', error); // 에러 로그 추가
     res.status(500).json({ message: '자가진단 결과 조회 중 오류가 발생했습니다.', error });
   }
 });
 
-
-// 특정 보호자가 관련된 모든 자가진단 결과 조회
-exports.getAssessmentsByGuardian = asyncHandler(async (req, res) => {
-  try {
-    const guardianId = req.user._id; // JWT 토큰에서 추출한 guardianId
-
-    // guardianId로 KDSQ(보호자가 수행한)와 PRMQ(노인 사용자가 수행한) 결과를 모두 조회
-    const assessments = await Assessment.find({
-      $or: [
-        { guardianId: guardianId },  // 보호자가 수행한 KDSQ 결과
-        { userId: guardianId }       // 노인 사용자가 수행한 PRMQ 결과를 관리하는 보호자
-      ]
-    });
-
-    if (assessments.length === 0) {
-      return res.status(404).json({ message: '자가진단 결과를 찾을 수 없습니다.' });
-    }
-
-    res.status(200).json({ data: assessments });
-  } catch (error) {
-    res.status(500).json({ message: 'Error retrieving assessments', error });
-  }
-});
-
+/*
 // 특정 자가진단 결과 삭제
 exports.deleteAssessment = asyncHandler(async (req, res) => {
   try {
@@ -130,3 +159,4 @@ exports.deleteAssessment = asyncHandler(async (req, res) => {
     res.status(500).json({ message: '삭제 실패', error });
   }
 });
+*/
