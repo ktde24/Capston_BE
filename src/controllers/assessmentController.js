@@ -38,7 +38,8 @@ exports.createAssessment = asyncHandler(async (req, res) => {
         date
       });
       await newAssessment.save();
-      res.status(201).json({ message: '성공', data: newAssessment });
+      res.status(201).json({ message: '성공', data: {assessment:newAssessment, name:elderlyUser.name} });
+      console.log({ message: '성공', data: {assessment:newAssessment, name:elderlyUser.name} });
 
     } else if (questionnaireType === 'PRMQ') {
       // 노인 사용자 자가진단인 경우 (보호자가 아닌 노인 사용자 자신의 자가진단)
