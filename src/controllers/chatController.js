@@ -159,6 +159,7 @@ exports.handleWebSocketMessage = async (ws, message) => {
             type: "response",
             gptText: gptResponse, // GPT 응답 따로 전송
             sessionId,
+            audioSize: audioContent ? audioContent.length : null, // 음성 데이터 크기 추가
           })
         );
 
