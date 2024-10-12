@@ -1,9 +1,10 @@
-// 0816ver - 일기, 컨디션, 자녀에게 전하고 싶은 말 기록용 챗봇
+// 1013ver - 일기, 컨디션, 자녀에게 전하고 싶은 말 기록용 챗봇
 require('dotenv').config();
 const { OpenAI } = require("openai");
 const ChatSession = require('../models/ChatSession');
 const Diary = require('../models/Diary');
 const mongoose = require('mongoose');
+const ElderlyUser = require('../models/ElderlyUser'); // ElderlyUser 모델 가져오기
 
 // 프롬프트 설정
 let prompt = `
@@ -39,12 +40,10 @@ Section 2: Record health status obtained through the questionnaire. The title sh
 </Output>
 `;
 
-
-
-const gptModel='gpt-4o-mini';
+const gptModel = 'gpt-4o-mini';
 
 // GPT-4o 호출 함수
-async function callChatgpt(conversations) {
+async function callChatgpt(conversations, userId) {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
@@ -52,19 +51,27 @@ async function callChatgpt(conversations) {
   let messages = [{ role: "system", content: prompt }];
   messages = messages.concat(conversations);
 
+  // 사용자 정보 가져오기 (이름 포함)
+  const user = await ElderlyUser.findById(userId);
+  const userName = user ? user.name : "사용자"; // 이름이 없으면 '사용자'로 대체
+
   try {
     const response = await openai.chat.completions.create({
       model: gptModel,
       messages: messages,
     });
 
+    // 응답에서 000님을 실제 사용자 이름으로 대체
+    let gptResponse = response.choices[0].message.content;
+    gptResponse = gptResponse.replace(/\d{3}님/g, `${userName}님`);
+
     // gpt 응답 내용을 assistant로 저장
     conversations.push({
       role: "assistant",
-      content: response.choices[0].message.content,
+      content: gptResponse,
     });
 
-    return response.choices[0].message.content;
+    return gptResponse;
 
   } catch (error) {
     console.error('Chatgpt API를 불러오는 과정에서 에러 발생', error);
@@ -73,7 +80,7 @@ async function callChatgpt(conversations) {
 }
 
 // 일기 생성 함수
-async function generateDiary(conversations,userId) {
+async function generateDiary(conversations, userId) {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
@@ -87,42 +94,47 @@ async function generateDiary(conversations,userId) {
       messages: messages,
     });
 
-    const fullResponse = response.choices[0].message.content;
+    let fullResponse = response.choices[0].message.content;
+    
+    // 사용자 이름 삽입
+    const user = await ElderlyUser.findById(userId);
+    const userName = user ? user.name : "사용자";
+    fullResponse = fullResponse.replace(/000님/g, `${userName}님`);
 
     //gpt 자체 생성(종료멘트)-> 일기 생성 후 저장
-    if(fullResponse.includes('오늘의 대화가 완료되었습니다')){
+    if (fullResponse.includes('오늘의 대화가 완료되었습니다')) {
       console.log('오늘의 질문 종료!');
       console.log(fullResponse);
+
       // 파싱 로직
       const diary = extractSection(fullResponse, '오늘의 일기');
       const healthStatus = extractSection(fullResponse, '건강 상태');
 
-      //console.log("오늘의 일기:", diary);
-      //console.log("건강 상태:", healthStatus);
-
-      //return { diary, messageToChild, healthStatus };
+      console.log("오늘의 일기:", diary);
+      console.log("건강 상태:", healthStatus);
 
       // 새로운 일기 생성 및 저장
       if (diary) {
-        const newDiary = new Diary({
-          userId: userId,
-          diaryId: new mongoose.Types.ObjectId(), // 명시적으로 고유한 diaryId 생성
-          content: diary,
-          healthStatus: healthStatus,
-        });
-        await newDiary.save();
-        console.log(newDiary);
-        return '오늘의 대화가 완료되었습니다. 멋진 일기를 만들어 드릴 테니, 꼭 확인해 주세요!';
+        try {
+          const newDiary = new Diary({
+            userId: userId,
+            diaryId: new mongoose.Types.ObjectId(), // 명시적으로 고유한 diaryId 생성
+            content: diary,
+            healthStatus: healthStatus,
+          });
+          await newDiary.save();
+          console.log('일기 저장 성공:', newDiary);
+          return `${userName}님, 오늘의 대화가 완료되었습니다. 멋진 일기를 만들어 드릴 테니, 꼭 확인해 주세요!`;
+        } catch (error) {
+          console.error('일기 저장 중 오류 발생:', error);
+        }
       }
-    }
-
-    else{//대화 진행
+    } else { // 대화 진행
       // gpt 응답 내용을 assistant로 저장
       conversations.push({
         role: "assistant",
         content: response.choices[0].message.content,
       });
-    
       return response.choices[0].message.content;
     }
 
@@ -132,6 +144,7 @@ async function generateDiary(conversations,userId) {
   }
 }
 
+// 섹션 추출 함수
 function extractSection(text, title) {
   const regex = new RegExp(
     `(?:\\*\\*${title}\\*\\*|### ${title})[\\s\\S]*?(?=(?:\\n(?:\\*\\*[\\s\\S]*?|### [\\s\\S]*?)\\n|$))`,
@@ -140,7 +153,7 @@ function extractSection(text, title) {
 
   const match = regex.exec(text);
   if (match) {
-    // 제목,공백 제거
+    // 제목과 공백 제거
     const formattedTitle = title.includes('###') ? `### ${title}` : `**${title}**`;
     return match[0].replace(`${formattedTitle}\n`, '').trim();
   }
