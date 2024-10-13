@@ -31,7 +31,7 @@ You must not use any other format or style for section titles.
 Continue the conversation by giving empathy and advice in a friendly way. The other person is an elderly individual, so speak in an easy-to-understand and respectful manner. The diary should be written in accordance with the user's tone of voice and in casual language, but sentences should end with the format "~다" to maintain a proper diary style.
  </Style> 
 <Output> 
-If you have asked all the questions for today, you must include one of the following phrases in your response: 
+If the user wants to finish the conversation or you have asked all the questions for today, you must include one of the following phrases in your response: 
 "000님, 오늘 나눈 대화도 재밌었어요! 오늘의 대화를 바탕으로 멋진 일기를 작성해드릴게요. 내일도 찾아와주세요!"
 Do not replace these phrases with anything else.
 Then, you should create 2 sections for the output:
@@ -102,7 +102,7 @@ async function generateDiary(conversations, userId) {
     fullResponse = fullResponse.replace(/000님/g, `${userName}님`);
 
     //gpt 자체 생성(종료멘트)-> 일기 생성 후 저장
-    if (fullResponse.includes('오늘의 대화가 완료되었습니다')) {
+    if (fullResponse.includes('오늘의 대화를 바탕으로 멋진 일기를 작성해드릴게요.')) {
       console.log('오늘의 질문 종료!');
       console.log(fullResponse);
 
