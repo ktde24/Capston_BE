@@ -1,4 +1,3 @@
-// 1013ver - 일기, 컨디션, 자녀에게 전하고 싶은 말 기록용 챗봇
 require('dotenv').config();
 const { OpenAI } = require("openai");
 const ChatSession = require('../models/ChatSession');
@@ -40,10 +39,10 @@ Section 2: Record health status obtained through the questionnaire. The title sh
 </Output>
 `;
 
-const gptModel = 'gpt-4o-mini';
+const gptModel = 'gpt-4o';
 
 // GPT-4o 호출 함수
-async function callChatgpt(conversations, userId) {
+async function callChatgpt(conversations) {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
@@ -51,36 +50,29 @@ async function callChatgpt(conversations, userId) {
   let messages = [{ role: "system", content: prompt }];
   messages = messages.concat(conversations);
 
-  // 사용자 정보 가져오기 (이름 포함)
-  const user = await ElderlyUser.findById(userId);
-  const userName = user ? user.name : "사용자"; // 이름이 없으면 '사용자'로 대체
-
   try {
     const response = await openai.chat.completions.create({
       model: gptModel,
       messages: messages,
     });
 
-    // 응답에서 000님을 실제 사용자 이름으로 대체
-    let gptResponse = response.choices[0].message.content;
-    gptResponse = gptResponse.replace(/\d{3}님/g, `${userName}님`);
-
-    // gpt 응답 내용을 assistant로 저장
     conversations.push({
       role: "assistant",
-      content: gptResponse,
+      content: response.choices[0].message.content,
     });
 
-    return gptResponse;
+    return response.choices[0].message.content;
 
   } catch (error) {
-    console.error('Chatgpt API를 불러오는 과정에서 에러 발생', error);
+    console.error('Chatgpt API 호출 중 오류:', error);
     return null;
   }
 }
 
 // 일기 생성 함수
 async function generateDiary(conversations, userId) {
+  //console.log("generateDiary 함수 시작");
+  
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
@@ -94,43 +86,39 @@ async function generateDiary(conversations, userId) {
       messages: messages,
     });
 
-    let fullResponse = response.choices[0].message.content;
+    const fullResponse = response.choices[0].message.content;
+
+    // 기본 종료 기준: 질문의 개수 기반 자동 종료
+    const questionCount = conversations.filter(msg => msg.role === "assistant").length;
     
-    // 사용자 이름 삽입
-    const user = await ElderlyUser.findById(userId);
-    const userName = user ? user.name : "사용자";
-    fullResponse = fullResponse.replace(/000님/g, `${userName}님`);
-
-    //gpt 자체 생성(종료멘트)-> 일기 생성 후 저장
-    if (fullResponse.includes('오늘의 대화가 완료되었습니다')) {
-      console.log('오늘의 질문 종료!');
-      console.log(fullResponse);
-
+    if (questionCount >= 7 || fullResponse.includes('종료') || fullResponse.includes('그만')) {
+      console.log('대화가 충분히 이루어졌으므로 종료하고 일기 생성');
+      
       // 파싱 로직
       const diary = extractSection(fullResponse, '오늘의 일기');
       const healthStatus = extractSection(fullResponse, '건강 상태');
 
-      console.log("오늘의 일기:", diary);
-      console.log("건강 상태:", healthStatus);
+      //console.log("파싱된 일기:", diary);
+      //console.log("파싱된 건강 상태:", healthStatus);
 
       // 새로운 일기 생성 및 저장
       if (diary) {
         try {
           const newDiary = new Diary({
             userId: userId,
-            diaryId: new mongoose.Types.ObjectId(), // 명시적으로 고유한 diaryId 생성
+            diaryId: new mongoose.Types.ObjectId(), // 고유한 diaryId 생성
             content: diary,
             healthStatus: healthStatus,
           });
-          await newDiary.save();
-          console.log('일기 저장 성공:', newDiary);
-          return `${userName}님, 오늘의 대화가 완료되었습니다. 멋진 일기를 만들어 드릴 테니, 꼭 확인해 주세요!`;
+          //console.log('새로운 일기 저장 시도:', newDiary);
+          await newDiary.save(); // 일기 저장
+          //console.log('일기 저장 성공:', newDiary);
         } catch (error) {
-          console.error('일기 저장 중 오류 발생:', error);
+          //console.error('일기 저장 중 오류 발생:', error.message);
         }
       }
-    } else { // 대화 진행
-      // gpt 응답 내용을 assistant로 저장
+      
+    } else {
       conversations.push({
         role: "assistant",
         content: response.choices[0].message.content,
@@ -139,10 +127,11 @@ async function generateDiary(conversations, userId) {
     }
 
   } catch (error) {
-    console.error('Chatgpt API를 불러오는 과정에서 에러 발생', error);
+    console.error('GPT 응답 처리 중 오류 발생:', error);
     return null;
   }
 }
+
 
 // 섹션 추출 함수
 function extractSection(text, title) {
@@ -153,11 +142,10 @@ function extractSection(text, title) {
 
   const match = regex.exec(text);
   if (match) {
-    // 제목과 공백 제거
     const formattedTitle = title.includes('###') ? `### ${title}` : `**${title}**`;
     return match[0].replace(`${formattedTitle}\n`, '').trim();
   }
-  
+
   return null;
 }
 

@@ -1,16 +1,59 @@
+// 1013 ver
 const { generateDiary } = require("../utils/chatgpt");
 const { speechToText } = require("../utils/stt");
 const { textToSpeechConvert } = require("../utils/tts");
 const ElderlyUser = require("../models/ElderlyUser");
 const ChatSession = require("../models/ChatSession");
+const Diary = require('../models/Diary'); // 일기 모델 추가
 const { v4: uuidv4 } = require("uuid");
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const WebSocket = require('ws');
 
+// 오늘의 일기가 이미 존재하는지 확인하는 함수
+async function checkDiaryExistsForToday(userId) {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+
+  const startDate = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+  const endDate = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
+
+  const existingDiary = await Diary.findOne({
+    userId: userId,
+    date: { $gte: startDate, $lte: endDate }
+  });
+
+  return existingDiary ? true : false;
+}
+
 // 소담이 먼저 말 걸어줌
 async function initMessage(ws, token, sessionId) {
   const userId = getUserFromToken(token);
+
+  // 오늘의 일기가 이미 생성되었는지 확인
+  const diaryExists = await checkDiaryExistsForToday(userId);
+  if (diaryExists) {
+    const diaryExistsMsg = '오늘의 일기는 이미 생성되었습니다. 내일 다시 찾아와 주세요!';
+    let audioContent = await textToSpeechConvert(diaryExistsMsg);
+
+    // JSON 응답 전송
+    ws.send(
+      JSON.stringify({
+        type: "response",
+        userText: '...', 
+        gptText: diaryExistsMsg,
+        sessionId: sessionId,
+      })
+    );
+
+    // 음성 데이터 전송
+    if (audioContent) {
+      ws.send(audioContent);
+    }
+    return;
+  }
 
   // 대화 세션 찾기
   let chatSession = await ChatSession.findOne({
@@ -70,29 +113,13 @@ exports.handleWebSocketMessage = async (ws, message) => {
 
       const userId = getUserFromToken(token);
       ws.userId = userId;
+       // 세션 ID가 이미 있으면 유지하고, 없으면 새로운 세션 ID를 생성
       ws.sessionId = sessionId || ws.sessionId || uuidv4();
 
       const user = await ElderlyUser.findById(userId);
       if (!user) {
         ws.send(JSON.stringify({ type: "error", message: "사용자를 찾을 수 없습니다." }));
         return;
-      }
-
-      const today = new Date().toISOString();
-      const year = today.substring(0, 4);
-      const month = today.substring(5, 7);
-      const day = today.substring(8, 10);
-
-      const startDate = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
-      const endDate = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
-
-      const existingSession = await ChatSession.findOne({
-        userId,
-        createdAt: { $gte: startDate, $lte: endDate }
-      });
-
-      if (existingSession) {
-        ws.sessionId = existingSession.sessionId;
       }
 
       if (data.type == "startConversation") {
