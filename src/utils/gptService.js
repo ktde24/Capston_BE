@@ -88,10 +88,10 @@ async function generateDiary(conversations, userId) {
 
     const fullResponse = response.choices[0].message.content;
 
-    // 기본 종료 기준: 질문의 개수 기반 자동 종료
+    // 기본 종료 기준: 질문 개수 기반 자동 종료
     const questionCount = conversations.filter(msg => msg.role === "assistant").length;
     
-    if (questionCount >= 7 || fullResponse.includes('종료') || fullResponse.includes('그만')) {
+    if (questionCount >= 14 || fullResponse.includes('종료') || fullResponse.includes('그만')) {
       console.log('대화가 충분히 이루어졌으므로 종료하고 일기 생성');
       
       // 파싱 로직
